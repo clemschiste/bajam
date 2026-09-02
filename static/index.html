@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <div>Latitude : <span id="latitude"></span></div>
+
+  <div>Longitude : <span id="longitude"></span></div>
+
+  <div>Timestamp : <span id="timestamp"></span></div>
+</html>
+
+<script>
+  async function updateHeartbeat() {
+    const response = await fetch("/heartbeat");
+
+    if (!response.ok) {
+      return;
+    }
+
+    const heartbeat = await response.json();
+
+    document.getElementById("latitude").textContent = heartbeat.latitude;
+    document.getElementById("longitude").textContent = heartbeat.longitude;
+    document.getElementById("timestamp").textContent = heartbeat.timestamp;
+  }
+
+  updateHeartbeat();
+
+  setInterval(updateHeartbeat, 5000);
+</script>
