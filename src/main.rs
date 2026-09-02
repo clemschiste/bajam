@@ -8,13 +8,17 @@ use axum::{
 use axum::http::StatusCode;
 use sqlx::{Pool, Result, Sqlite, SqlitePool, sqlite::SqlitePoolOptions};
 use tower_http::services::ServeDir;
+use dotenv::dotenv;
+use std::env;
 
 // Serveur
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-
-    let db = db_connect("sqlite://heartbeat.sqlite").await?;
+    dotenv().ok(); // Reads the .env file
+    let database_url = env::var("DATABASE_URL")?;
+    let db = db_connect(&database_url).await?;
+    
     let state = AppState::new(db);
     
     let app = Router::new()
@@ -109,16 +113,14 @@ pub async fn heartbeat_post(
     Ok(StatusCode::NO_CONTENT)
 }
 
-// pub async fn heartbeat_post(
-//     State(state): State<AppState>,
-// ) -> StatusCode {
-//     StatusCode::NO_CONTENT
-// }
-
 async fn db_connect(path: &str) -> Result<Pool<Sqlite>, sqlx::Error> {
     let db = SqlitePoolOptions::new()
         .max_connections(3)
         .connect(path)
+        .await?;
+
+    sqlx::migrate!("./migrations")
+        .run(&db)
         .await?;
 
     Ok(db)
