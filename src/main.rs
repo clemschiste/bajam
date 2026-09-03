@@ -1,15 +1,15 @@
 use std::net::SocketAddr;
-use axum::{Json, extract::State};
+use std::env;
 use serde::{Deserialize, Serialize};
+use axum::{Json, extract::State};
 use axum::{
     Router,
     routing::{get, post},
 };
 use axum::http::StatusCode;
-use sqlx::{Pool, Result, Sqlite, SqlitePool, sqlite::SqlitePoolOptions};
+use sqlx::{Pool, Result, Sqlite, SqlitePool, sqlite::SqlitePoolOptions, migrate::Migrator};
 use tower_http::services::ServeDir;
 use dotenv::dotenv;
-use std::env;
 
 // Serveur
 
@@ -18,8 +18,9 @@ async fn main() -> anyhow::Result<()> {
     dotenv().ok(); // Reads the .env file
     let database_url = env::var("DATABASE_URL")?;
     let db = db_connect(&database_url).await?;
-    
-    let state = AppState::new(db);
+
+    // load db + history    
+    let state = AppState::new(db).await?;
     
     let app = Router::new()
         .route("/heartbeat", get(heartbeat_get))
@@ -40,16 +41,38 @@ async fn main() -> anyhow::Result<()> {
 #[derive(Clone)]
 pub struct AppState {
     pub db: SqlitePool,
+    pub history: Vec<Heartbeat>,
 }
 
+// A voir si je souhaite tracer la ligne. Probablement pas maintenant mais il faudrait retourner dans le bon ordre
 impl AppState {
-    fn new(db: SqlitePool) -> AppState {
-        AppState { db }
+    async fn new(db: SqlitePool) -> Result<Self, sqlx::Error> {
+        print!("Loading history... ");
+        let history = sqlx::query_as!(
+            Heartbeat,
+            r#"
+                SELECT latitude, longitude, timestamp
+                FROM heartbeats
+                ORDER BY timestamp DESC
+                LIMIT 100
+            "#
+        )
+        .fetch_all(&db)
+        .await?;
+
+        println!("Done.");
+
+        Ok(Self {
+            db,
+            history,
+        })
+
     }
 }
+    
 
 // SQL struct
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Heartbeat {
     latitude: f64,
     longitude: f64,
@@ -62,8 +85,18 @@ pub struct HeartbeatPost {
     latitude: f64,
     longitude: f64,
 }
+ 
+// Heartbeat response. Inclut un historique des positions
+#[derive(Serialize, Deserialize, Debug)]
+pub struct HeartbeatResponse {
+    latitude: f64,
+    longitude: f64,
+    timestamp: String,
+    history: Vec<Heartbeat>, // Pour map libre js -> [longitude, latitude]
+}
 
-pub async fn heartbeat_get(State(state): State<AppState>) -> Result<axum::Json<Heartbeat>, (StatusCode, String)> {
+// Récupère le dernier heartbeat
+pub async fn heartbeat_get(State(mut state): State<AppState>) -> Result<axum::Json<HeartbeatResponse>, (StatusCode, String)> {
     println!("Heartbeat request received");
     let heartbeat = sqlx::query_as!(
         Heartbeat,
@@ -81,11 +114,19 @@ pub async fn heartbeat_get(State(state): State<AppState>) -> Result<axum::Json<H
         (StatusCode::INTERNAL_SERVER_ERROR, format!("Database error : {e}"))
     })?;
 
-    Ok(Json(Heartbeat {
+    let previous_history = state.history.clone();
+    // Ajouter une condition de push si le timestamp a changé seulement.
+    if previous_history[0].timestamp != heartbeat.timestamp {
+        state.history.push(heartbeat.clone());
+    }
+
+    Ok(Json(HeartbeatResponse {
         latitude: heartbeat.latitude,
         longitude: heartbeat.longitude,
         timestamp: heartbeat.timestamp,
+        history: previous_history
     }))
+
 }
 
 // Pour un post axum il faut return StatusCode
@@ -93,7 +134,7 @@ pub async fn heartbeat_post(
     State(state): State<AppState>,
     Json(payload): Json<HeartbeatPost>
 ) -> Result<StatusCode, (StatusCode, String)> {
-    println!("Heartbeat post received");
+    println!("Heartbeat post received {:?}", payload);
 
     sqlx::query(
        r#"
@@ -114,15 +155,19 @@ pub async fn heartbeat_post(
 }
 
 async fn db_connect(path: &str) -> Result<Pool<Sqlite>, sqlx::Error> {
+    println!("Connecting to db at {}.", path);
     let db = SqlitePoolOptions::new()
         .max_connections(3)
         .connect(path)
         .await?;
 
-    sqlx::migrate!("./migrations")
-        .run(&db)
-        .await?;
+    print!("Checking for migrations... ");
+    MIGRATOR.run(&db).await?;
 
+    println!("Done.");
     Ok(db)
 
 }
+// Embeds migrations into the compiled binary
+// Empty -> default to "./migrations"
+static MIGRATOR: Migrator = sqlx::migrate!();

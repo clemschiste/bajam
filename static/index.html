@@ -1,28 +1,100 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <div>Latitude : <span id="latitude"></span></div>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mes positions</title>
 
-  <div>Longitude : <span id="longitude"></span></div>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/maplibre-gl@6.7.0/dist/maplibre-gl.css"
+    />
 
-  <div>Timestamp : <span id="timestamp"></span></div>
+    <style>
+      #map {
+        height: 800px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Ma position</h1>
+
+    <div>
+      Latitude :
+      <span id="latitude">-</span>
+    </div>
+
+    <div>
+      Longitude :
+      <span id="longitude">-</span>
+    </div>
+
+    <div>
+      Timestamp :
+      <span id="timestamp">-</span>
+    </div>
+
+    <div id="map"></div>
+
+    <script type="module">
+      import * as maplibregl from "https://unpkg.com/maplibre-gl@6.7.0/dist/maplibre-gl.mjs";
+
+      // Création de la carte
+      const map = new maplibregl.Map({
+        container: "map",
+        style: "https://demotiles.maplibre.org/globe.json",
+        center: [0, 0],
+        zoom: 2.5,
+        minZoom: 2.5,
+        maxZoom: 20,
+      });
+
+      // Récupération des positions
+      async function loadHeartbeat() {
+        const response = await fetch("/heartbeat");
+
+        if (!response.ok) {
+          console.error("Impossible de récupérer le heartbeat");
+          return;
+        }
+
+        const heartbeat = await response.json();
+
+        // Affichage de la position actuelle
+        document.getElementById("latitude").textContent = heartbeat.latitude;
+        document.getElementById("longitude").textContent = heartbeat.longitude;
+        document.getElementById("timestamp").textContent = heartbeat.timestamp;
+
+        // Position actuelle
+        const currentPosition = [heartbeat.longitude, heartbeat.latitude];
+
+        // Marker de la position actuelle
+        new maplibregl.Marker({
+          color: "#ff0000",
+        })
+          .setLngLat(currentPosition)
+          .addTo(map);
+
+        // Markers des anciennes positions
+        for (const beat of heartbeat.history) {
+          const position = [beat.longitude, beat.latitude];
+
+          new maplibregl.Marker({
+            color: "#888888",
+          })
+            .setLngLat(position)
+            .addTo(map);
+        }
+
+        // Centrer la carte sur la position actuelle
+        map.flyTo({
+          center: currentPosition,
+          zoom: 5,
+        });
+      }
+
+      // Chargement initial
+      loadHeartbeat();
+    </script>
+  </body>
 </html>
-
-<script>
-  async function updateHeartbeat() {
-    const response = await fetch("/heartbeat");
-
-    if (!response.ok) {
-      return;
-    }
-
-    const heartbeat = await response.json();
-
-    document.getElementById("latitude").textContent = heartbeat.latitude;
-    document.getElementById("longitude").textContent = heartbeat.longitude;
-    document.getElementById("timestamp").textContent = heartbeat.timestamp;
-  }
-
-  updateHeartbeat();
-
-  setInterval(updateHeartbeat, 5000);
-</script>
