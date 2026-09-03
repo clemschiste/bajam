@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 use std::env;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Deserializer};
 use axum::{Json, extract::State};
 use axum::{
     Router,
@@ -69,7 +69,6 @@ impl AppState {
 
     }
 }
-    
 
 // SQL struct
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -80,10 +79,39 @@ pub struct Heartbeat {
 }
 
 // Post struct (timestamp created at INSERTION)
+// Iphone inable to send floats in the json position...
 #[derive(Serialize, Deserialize, Debug)]
 pub struct HeartbeatPost {
+    #[serde(deserialize_with = "string_or_float")]
     latitude: f64,
+    #[serde(deserialize_with = "string_or_float")]
     longitude: f64,
+}
+
+fn string_or_float<'de, D>(deserializer: D) -> Result<f64, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum StringOrFloat {
+        Float(f64),
+        String(String),
+    }
+
+    match StringOrFloat::deserialize(deserializer)? {
+        StringOrFloat::Float(value) => Ok(value),
+        StringOrFloat::String(value) => value
+            .parse::<f64>()
+            .map_err(serde::de::Error::custom),
+    }
+}
+
+// Post struct (timestamp created at INSERTION)
+#[derive(Serialize, Deserialize, Debug)]
+pub struct HeartbeatPostString {
+    latitude: String,
+    longitude: String,
 }
  
 // Heartbeat response. Inclut un historique des positions
@@ -128,6 +156,8 @@ pub async fn heartbeat_get(State(mut state): State<AppState>) -> Result<axum::Js
     }))
 
 }
+
+// Il faut une première fonction qui fait la conversion
 
 // Pour un post axum il faut return StatusCode
 pub async fn heartbeat_post(
