@@ -1,5 +1,6 @@
 use std::net::SocketAddr;
 use std::env;
+use axum::middleware::from_fn;
 use serde::{Deserialize, Serialize, Deserializer};
 use axum::{Json, extract::State};
 use axum::{
@@ -7,6 +8,8 @@ use axum::{
     routing::{get, post},
 };
 use axum::http::StatusCode;
+use axum::{extract::Request, middleware::Next, response::Response};
+use std::time::Instant;
 use sqlx::{Pool, Result, Sqlite, SqlitePool, sqlite::SqlitePoolOptions, migrate::Migrator};
 use tower_http::services::ServeDir;
 use dotenv::dotenv;
@@ -26,6 +29,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/heartbeat", get(heartbeat_get))
         .route("/heartbeat", post(heartbeat_post))
         .fallback_service(ServeDir::new("static"))
+        .layer(from_fn(logger))
         .with_state(state);
 
     // adresse d'écoute
@@ -36,6 +40,23 @@ async fn main() -> anyhow::Result<()> {
     axum::serve(listener, app).await?;
 
     Ok(())
+}
+
+async fn logger(req: Request, next: Next) -> Response {
+    let method = req.method().clone();
+    let uri    = req.uri().clone();
+    let start  = Instant::now();
+    // call next and get the response
+    let response = next.run(req).await;
+    // now we have the status code and elapsed time
+    println!(
+        "{} {} {} {}ms",
+        method, uri,
+        response.status(),
+        start.elapsed().as_millis()
+    );
+    // prints: GET /users 200 OK 4ms
+    response
 }
 
 #[derive(Clone)]
