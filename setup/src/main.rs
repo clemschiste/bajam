@@ -5,7 +5,7 @@ use std::{
 };
 
 
-use sqlx::{migrate::Migrator, sqlite::SqlitePoolOptions, Pool, Result, Sqlite, SqlitePool};
+use sqlx::{migrate::Migrator, sqlite::SqlitePoolOptions, Pool, Result, Sqlite};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -14,7 +14,7 @@ async fn main() -> anyhow::Result<()> {
 
     OpenOptions::new().create(true).write(true).open(db_path)?;
 
-    fs::write(".env", format!("DATABASE_URL=sqlite://{db_name}\n"))?;
+    fs::write(".env", format!("DATABASE_URL=sqlite://{db_name}\nTCP_LOCAL=127.0.0.1:3000\n"))?;
 
     println!("✓ Database: {db_name}");
     println!("✓ .env created");

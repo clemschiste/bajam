@@ -1,0 +1,82 @@
+:root {
+  --primary: #ff6f00;
+  /* orange vif */
+  --secondary: #6a1b9a;
+  /* violet profond */
+  --neutral: #f5f5f5;
+  /* gris clair */
+}
+
+@font-face {
+  font-family: "Intel One Mono";
+  src: url("./fonts/IntelOneMono-Regular.ttf");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Intel One Mono";
+  src: url("./fonts/IntelOneMono-Medium.ttf");
+  font-weight: 500;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Intel One Mono";
+  src: url("./fonts/IntelOneMono-Bold.ttf");
+  font-weight: 700;
+  font-style: normal;
+}
+
+body {
+  padding: 1rem;
+  display: flex;
+  overflow: hidden;
+  height: 100%;
+  flex-direction: column;
+  font-family: "Intel One Mono";
+
+
+  background-color: #f5f5f5;
+  /* gris clair avec un code hexadécimal */
+}
+
+main {
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+}
+
+.dashboard-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  padding: 10px;
+  margin: 0 auto;
+  align-item: center;
+}
+.dashboard-sub-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(3, 1fr);
+  gap: 15px;
+  padding: 10px;
+  margin: 0 auto;
+  align-items: center;
+}
+.card {
+  border: 1px solid #ccc;
+  border-radius; 8px;
+}
+
+/* Surligner le texte : */
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+a:hover {
+  color: var(--neutral);
+  /* text-shadow: 0 0 5px var(--secondary); */
+}
+

@@ -1,5 +1,3 @@
-use std::net::SocketAddr;
-use std::env;
 use axum::middleware::from_fn;
 use serde::{Deserialize, Serialize, Deserializer};
 use axum::{Json, extract::State};
@@ -13,12 +11,17 @@ use std::time::Instant;
 use sqlx::{Pool, Result, Sqlite, SqlitePool, sqlite::SqlitePoolOptions, migrate::Migrator};
 use tower_http::services::ServeDir;
 use dotenv::dotenv;
+use std::env;
+use clap::Parser;
+mod config;
+use config::{Args, Config};
 
 // Serveur
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenv().ok(); // Reads the .env file
+    let args = Args::parse();
+    let config = Config::from_args(&args)?;
     let database_url = env::var("DATABASE_URL")?;
     let db = db_connect(&database_url).await?;
 
@@ -33,9 +36,9 @@ async fn main() -> anyhow::Result<()> {
         .with_state(state);
 
     // adresse d'écoute
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    let listener = tokio::net::TcpListener::bind(addr).await?;
-    println!("Serveur lancé sur http://{}", addr);
+    let tcp_addr = config.tcp_addr;
+    let listener = tokio::net::TcpListener::bind(&tcp_addr).await?;
+    println!("Serveur lancé sur http://{}", tcp_addr);
 
     axum::serve(listener, app).await?;
 

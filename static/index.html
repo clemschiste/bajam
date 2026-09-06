@@ -6,35 +6,43 @@
 
     <link
       rel="stylesheet"
-      href="https://unpkg.com/maplibre-gl@6.7.0/dist/maplibre-gl.css"
+      href="style.css"
     />
 
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@^6.7.0/dist/maplibre-gl.css" />
     <style>
       #map {
-        height: 800px;
+        height: 400px;
       }
     </style>
   </head>
 
   <body>
-    <h1>Ma position</h1>
+  <h1>Ma position</h1>
+  <main class="dashboard-container">
+  <section class="dashboard-sub-container">
 
-    <div>
+    <div class="card">
+    <h2>info</h2>
       Latitude :
       <span id="latitude">-</span>
-    </div>
-
-    <div>
       Longitude :
       <span id="longitude">-</span>
-    </div>
-
-    <div>
       Timestamp :
       <span id="timestamp">-</span>
     </div>
 
+    <div class ="card">
+      <h2>description</h2>
+    </div>
+    <div class ="card">
+      <h2>photos</h2>
+    </div>
+  </section>
+  <aside class="card">
     <div id="map"></div>
+  </aside>
+  </main>
 
     <script type="module">
       import * as maplibregl from "https://unpkg.com/maplibre-gl@6.7.0/dist/maplibre-gl.mjs";
