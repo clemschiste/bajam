@@ -14,10 +14,10 @@ With the help of 'Shortcuts' from the Iphone :
 ```json
 {
   "latitude": XX.XXXXX,
-  "longitude: XX.XXXXX"
+  "longitude": XX.XXXXX
 }
 ```
-And maybe more (text, photos).
+And maybe more (text, photos... etc).
 
 > "But more.... much more than this... I did it my way..."
 
@@ -26,7 +26,7 @@ And maybe more (text, photos).
 # Quick start
 Clone the repo.
 ```bash
-# Create db + .env file with predefined values
+# Create Sqlite db + .env file with predefined values
 cargo run - p setup
 
 # Launch the server
