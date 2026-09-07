@@ -4,7 +4,3 @@ CREATE TABLE IF NOT EXISTS heartbeats (
   longitude FLOAT NOT NULL,
   timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP 
 );
-
-INSERT INTO heartbeats (latitude, longitude) 
-VALUES (0.0, 0.0)
-ON CONFLICT DO NOTHING;

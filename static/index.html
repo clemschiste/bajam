@@ -34,6 +34,7 @@
 
     <div class ="card">
       <h2>description</h2>
+      <span id="description">-</span>
     </div>
     <div class ="card">
       <h2>photos</h2>
@@ -72,6 +73,7 @@
         document.getElementById("latitude").textContent = heartbeat.latitude;
         document.getElementById("longitude").textContent = heartbeat.longitude;
         document.getElementById("timestamp").textContent = heartbeat.timestamp;
+        document.getElementById("description").textContent = heartbeat.description;
 
         // Position actuelle
         const currentPosition = [heartbeat.longitude, heartbeat.latitude];

@@ -75,7 +75,7 @@ impl AppState {
         let history = sqlx::query_as!(
             Heartbeat,
             r#"
-                SELECT latitude, longitude, timestamp
+                SELECT latitude, longitude, timestamp, description
                 FROM heartbeats
                 ORDER BY timestamp DESC
                 LIMIT 100
@@ -100,6 +100,7 @@ pub struct Heartbeat {
     latitude: f64,
     longitude: f64,
     timestamp: String,
+    description: Option<String>,
 }
 
 // Post struct (timestamp created at INSERTION)
@@ -110,6 +111,7 @@ pub struct HeartbeatPost {
     latitude: f64,
     #[serde(deserialize_with = "string_or_float")]
     longitude: f64,
+    description: Option<String>,
 }
 
 fn string_or_float<'de, D>(deserializer: D) -> Result<f64, D::Error>
@@ -131,19 +133,13 @@ where
     }
 }
 
-// Post struct (timestamp created at INSERTION)
-#[derive(Serialize, Deserialize, Debug)]
-pub struct HeartbeatPostString {
-    latitude: String,
-    longitude: String,
-}
- 
 // Heartbeat response. Inclut un historique des positions
 #[derive(Serialize, Deserialize, Debug)]
 pub struct HeartbeatResponse {
     latitude: f64,
     longitude: f64,
     timestamp: String,
+    description: Option<String>,
     history: Vec<Heartbeat>, // Pour map libre js -> [longitude, latitude]
 }
 
@@ -153,7 +149,7 @@ pub async fn heartbeat_get(State(mut state): State<AppState>) -> Result<axum::Js
     let heartbeat = sqlx::query_as!(
         Heartbeat,
         r#"
-            SELECT latitude, longitude, timestamp
+            SELECT latitude, longitude, timestamp, description
             FROM heartbeats
             ORDER By timestamp DESC
             LIMIT 1
@@ -165,10 +161,14 @@ pub async fn heartbeat_get(State(mut state): State<AppState>) -> Result<axum::Js
         eprintln!("Database error {}", e);
         (StatusCode::INTERNAL_SERVER_ERROR, format!("Database error : {e}"))
     })?;
+    // If empty -> Database error row empty
+    // If first heartbeat posted ->
+    dbg!(&heartbeat);
 
     let previous_history = state.history.clone();
+    dbg!(&previous_history);
     // Ajouter une condition de push si le timestamp a changé seulement.
-    if previous_history[0].timestamp != heartbeat.timestamp {
+    if !previous_history.is_empty() && previous_history[0].timestamp != heartbeat.timestamp {
         state.history.push(heartbeat.clone());
     }
 
@@ -176,6 +176,7 @@ pub async fn heartbeat_get(State(mut state): State<AppState>) -> Result<axum::Js
         latitude: heartbeat.latitude,
         longitude: heartbeat.longitude,
         timestamp: heartbeat.timestamp,
+        description: heartbeat.description,
         history: previous_history
     }))
 
@@ -192,12 +193,13 @@ pub async fn heartbeat_post(
 
     sqlx::query(
        r#"
-           INSERT INTO heartbeats (latitude, longitude)
-           VALUES (?, ?)
+           INSERT INTO heartbeats (latitude, longitude, description)
+           VALUES (?, ?, ?)
        "#
     )
     .bind(payload.latitude)
     .bind(payload.longitude)
+    .bind(payload.description)
     .execute(&state.db)
     .await
     .map_err(|e| {
