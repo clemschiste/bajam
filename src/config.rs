@@ -2,6 +2,13 @@ use anyhow::Context;
 use clap::Parser;
 use std::env;
 
+pub fn get_config_from_args() -> anyhow::Result<Config> {
+    let args = Args::parse();
+    let config = Config::from_args(&args)?;
+
+    Ok(config)
+}
+
 #[derive(Parser, Debug)]
 pub struct Args {
     /// Use TCP_TAILNET instead of TCP_LOCAL (if existing)

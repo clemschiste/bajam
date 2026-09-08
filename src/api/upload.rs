@@ -10,7 +10,7 @@ use axum::{
     response::Response,
 };
 
-use crate::api::heartbeat::AppState;
+use crate::AppState;
 
 #[derive(Serialize)]
 pub struct UploadResponse {
