@@ -3,3 +3,4 @@
 *.sqlite
 *.db
 hb.json
+uploads/*

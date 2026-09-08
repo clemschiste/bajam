@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
   <head>
@@ -75,6 +76,7 @@
         document.getElementById("timestamp").textContent = heartbeat.timestamp;
         document.getElementById("description").textContent = heartbeat.description;
 
+        console.log(heartbeat.upload_id);
         // Position actuelle
         const currentPosition = [heartbeat.longitude, heartbeat.latitude];
 
