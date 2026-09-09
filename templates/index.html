@@ -10,35 +10,27 @@
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@^6.7.0/dist/maplibre-gl.css" />
     <style>
       #map {
-        height: 400px;
+        height: 100%;
       }
     </style>
   </head>
 
   <body>
-  <h1>Ma position</h1>
   <main class="dashboard-container">
-  <section class="dashboard-sub-container">
-
     <div class="card">
-    <h2>info</h2>
-      <a>Latitude</a> : {{ latitude }}
-      Longitude : {{ longitude }}
-      Timestamp : {{ timestamp }}
+      <img
+        class="position-photo"
+        src="/image/{{ upload_id }}"
+        alt="Photo de la position"
+      >
     </div>
-
-    <div class ="card">
-      <h2>description</h2>
-      {{ description }}
-    </div>
-    <div class ="card">
-      <h2>photos</h2>
-      {{ upload_id }}
-    </div>
-  </section>
-  <aside class="card">
+      <aside class="card">
     <div id="map"></div>
   </aside>
+<div class ="card">
+      {{ timestamp }} :
+      {{ description }}
+    </div>
   </main>
 
   <script type="module">

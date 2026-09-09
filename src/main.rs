@@ -13,7 +13,6 @@ use state::{AppState, db_connect};
 
 mod api;
 use crate::api::heartbeat_post::*;
-use crate::api::heartbeat_get::*;
 use crate::api::index::*;
 use crate::api::upload::*;
 use api::logger;
@@ -32,10 +31,9 @@ async fn main() -> anyhow::Result<()> {
     
     let app = Router::new()
         .route("/", get(index))
-        .route("/heartbeat", get(heartbeat_get))
         .route("/heartbeat", post(heartbeat_post))
         .route("/upload", post(post_file))
-        .route("/photo/{upload_id}", get(get_photo))
+        .route("/image/{upload_id}", get(get_photo))
         .nest_service("/static", ServeDir::new("static"))
         .layer(DefaultBodyLimit::max(20 * 1024 * 1024))
         .layer(from_fn(logger))

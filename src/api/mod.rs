@@ -1,4 +1,3 @@
-pub mod heartbeat_get;
 pub mod heartbeat_post;
 pub mod index;
 pub mod upload;

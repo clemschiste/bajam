@@ -1,10 +1,7 @@
 :root {
   --primary: #ff6f00;
-  /* orange vif */
   --secondary: #6a1b9a;
-  /* violet profond */
   --neutral: #f5f5f5;
-  /* gris clair */
 }
 
 @font-face {
@@ -13,12 +10,14 @@
   font-weight: 400;
   font-style: normal;
 }
+
 @font-face {
   font-family: "Intel One Mono";
   src: url("./fonts/IntelOneMono-Medium.ttf");
   font-weight: 500;
   font-style: normal;
 }
+
 @font-face {
   font-family: "Intel One Mono";
   src: url("./fonts/IntelOneMono-Bold.ttf");
@@ -29,14 +28,11 @@
 body {
   padding: 1rem;
   display: flex;
-  overflow: hidden;
-  height: 100%;
+  /* overflow: hidden; */
+  /* height: 100%; */
   flex-direction: column;
   font-family: "Intel One Mono";
-
-
-  background-color: #f5f5f5;
-  /* gris clair avec un code hexadécimal */
+  background-color: var(--neutral);
 }
 
 main {
@@ -46,29 +42,46 @@ main {
   margin: 0 auto;
 }
 
-.dashboard-container {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
-  padding: 10px;
-  margin: 0 auto;
-  align-item: center;
-}
-.dashboard-sub-container {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: repeat(3, 1fr);
-  gap: 15px;
-  padding: 10px;
-  margin: 0 auto;
-  align-items: center;
-}
-.card {
-  border: 1px solid #ccc;
-  border-radius; 8px;
+
+body {
+  padding: 1rem;
+  margin: 0;
+  font-family: "Intel One Mono";
+  background-color: var(--neutral);
 }
 
-/* Surligner le texte : */
+.dashboard-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 15px;
+  padding: 10px;
+}
+
+.dashboard-sub-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 15px;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.position-photo {
+  display: block;
+  max-width: 100%;
+  /* max-height: 300px; */
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  margin: 0 auto;
+}
+
+/* Surligner le texte */
 a {
   color: var(--primary);
   text-decoration: none;
@@ -77,6 +90,4 @@ a {
 
 a:hover {
   color: var(--neutral);
-  /* text-shadow: 0 0 5px var(--secondary); */
 }
-
