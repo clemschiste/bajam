@@ -10,37 +10,45 @@
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@^6.7.0/dist/maplibre-gl.css" />
     <style>
       #map {
-        height: 100%;
+        height: 800px;
       }
     </style>
   </head>
 
   <body>
-  <main class="dashboard-container">
-    <div class="card">
-      <img
-        class="position-photo"
-        src="/image/{{ upload_id }}"
-        alt="Photo de la position"
-      >
-    </div>
-      <aside class="card">
+  <!-- <main class="dashboard-container"> -->
+    <!-- <div class="card"> -->
+      <!-- <img -->
+        <!-- class="position-photo" -->
+        <!-- src="/image/{{ upload_id }}" -->
+        <!-- alt="Photo de la position" -->
+      <!-- > -->
+    <!-- </div> -->
+      <!-- <aside class="card"> -->
     <div id="map"></div>
-  </aside>
-<div class ="card">
-      {{ timestamp }} :
-      {{ description }}
-    </div>
-  </main>
+  <!-- </aside> -->
+<!-- <div class ="card"> -->
+      <!-- {{ timestamp }} : -->
+      <!-- {{ description }} -->
+    <!-- </div> -->
+  <!-- </main> -->
+
+
+
+
+
 
   <script type="module">
     import * as maplibregl from "https://unpkg.com/maplibre-gl@6.7.0/dist/maplibre-gl.mjs";
+    const currentPosition = [{{ longitude }}, {{ latitude }}];
 
     // Création de la carte
     const map = new maplibregl.Map({
       container: "map",
+      // style: "https://tiles.openfreemap.org/styles/liberty",
+      // style: "https://tiles.openfreemap.org/styles/positron",
       style: "https://demotiles.maplibre.org/globe.json",
-      center: [0, 0],
+      center: [-50, 0],
       zoom: 2.5,
       minZoom: 2.5,
       maxZoom: 20,
@@ -51,6 +59,21 @@
       // Position actuelle
       const currentPosition = [{{ longitude }}, {{ latitude }}];
 
+
+      // Markers des anciennes positions
+      for (const beat of {{ history_json|safe }}) {
+        const position = [beat.longitude, beat.latitude];
+
+      const popup = new maplibregl.Popup({offset: 25})
+        .setHTML(`<h1>${beat.timestamp}</h1>${beat.description}`);
+
+      new maplibregl.Marker({
+        color: "#888888",
+      })
+        .setLngLat(position)
+        .setPopup(popup)
+        .addTo(map);
+      }
       // Marker de la position actuelle
       new maplibregl.Marker({
         color: "#ff0000",
@@ -58,21 +81,10 @@
         .setLngLat(currentPosition)
         .addTo(map);
 
-      // Markers des anciennes positions
-      for (const beat of {{ history_json|safe }}) {
-        const position = [beat.longitude, beat.latitude];
-
-      new maplibregl.Marker({
-        color: "#888888",
-      })
-        .setLngLat(position)
-        .addTo(map);
-      }
-
       // Centrer la carte sur la position actuelle
       map.flyTo({
         center: currentPosition,
-        zoom: 5,
+        zoom: 10,
       });
     }
 

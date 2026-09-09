@@ -1,2 +1,3 @@
 - Compresser les images par défault à la réception des bytes (600 width)
 - Fleches pour passer aux heartbeats précédent ou directement en cliquant sur le marqueur.
+- Check validity of data (long, lat)

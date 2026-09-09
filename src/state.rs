@@ -11,14 +11,17 @@ pub struct AppState {
 // A voir si je souhaite tracer la ligne. Probablement pas maintenant mais il faudrait retourner dans le bon ordre
 impl AppState {
     pub async fn new(db: SqlitePool) -> Result<Self, sqlx::Error> {
+        // Le problème quand tu relance le server, il intègre la "current pos" dans l'history
         print!("Loading history... ");
+
+        // OFFSET 1 car on ne veut pas intégrer la current à l'history
         let history = sqlx::query_as!(
             Heartbeat,
             r#"
                 SELECT latitude, longitude, timestamp, description, upload_id
                 FROM heartbeats
                 ORDER BY timestamp DESC
-                LIMIT 100
+                LIMIT 100 OFFSET 1
             "#
         )
         .fetch_all(&db)
