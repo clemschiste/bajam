@@ -7,6 +7,9 @@ use axum::{
     response::Response,
 };
 
+use image::ImageReader;
+use std::io::Cursor;
+
 use crate::AppState;
 
 
@@ -17,6 +20,40 @@ pub async fn post_picture(
     Path(picture_id): Path<String>,
     body: Bytes
 ) -> Result<StatusCode, (StatusCode, String)> {
+
+// 1. Limite de taille
+    if body.len() > 10 * 1024 * 1024 {
+        return Err((
+            StatusCode::PAYLOAD_TOO_LARGE,
+            "Image too large".into(),
+        ));
+    }
+
+    // 2. Vérification que c'est réellement une image
+    let image = ImageReader::new(Cursor::new(&body))
+        .with_guessed_format()
+        .map_err(|e| {
+            (
+                StatusCode::BAD_REQUEST,
+                format!("Invalid image: {e}"),
+            )
+        })?
+        .decode()
+        .map_err(|e| {
+            (
+                StatusCode::BAD_REQUEST,
+                format!("Invalid image: {e}"),
+            )
+        })?;
+
+    // 3. Vérifier éventuellement les dimensions
+    if image.width() > 4096 || image.height() > 4096 {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Image dimensions are too large".into(),
+        ));
+    }
+    
     let path = format!("./uploads/{}.jpg", picture_id);
     tokio::fs::create_dir_all("./uploads")
         .await
