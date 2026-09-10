@@ -1,9 +1,6 @@
 use axum::{
     body::Bytes,
-    Json
 };
-use serde::Serialize;
-use uuid::Uuid;
 use axum::{
     extract::{Path, State},
     http::{header, StatusCode},
@@ -12,19 +9,15 @@ use axum::{
 
 use crate::AppState;
 
-#[derive(Serialize)]
-pub struct UploadResponse {
-    pub upload_id: Uuid,
-}
 
-// Il faut check le format de la photo d'abord ?
-// Ce sera post_photo ensuite
-pub async fn post_file(
+// Il faut check le format de la picture d'abord ?
+// Ce sera post_picture ensuite
+pub async fn post_picture(
     State(state): State<AppState>,
-    body: Bytes,
-) -> Result<Json<UploadResponse>, (StatusCode, String)> {
-    let upload_id = Uuid::new_v4();
-    let path = format!("./uploads/{}.jpg", upload_id);
+    Path(picture_id): Path<String>,
+    body: Bytes
+) -> Result<StatusCode, (StatusCode, String)> {
+    let path = format!("./uploads/{}.jpg", picture_id);
     tokio::fs::create_dir_all("./uploads")
         .await
         .map_err(|e| {
@@ -39,8 +32,8 @@ pub async fn post_file(
         
 
     // Enregistre l'upload pour que les heartbeats puissent le référencer (FK)
-    sqlx::query("INSERT INTO photos (upload_id) VALUES (?)")
-        .bind(upload_id.to_string())
+    sqlx::query("INSERT INTO pictures (picture_id) VALUES (?)")
+        .bind(picture_id)
         .execute(&state.db)
         .await
         .map_err(|e| {
@@ -50,26 +43,25 @@ pub async fn post_file(
 
     println!("Received {} bytes", body.len());
 
-    Ok(Json(UploadResponse {
-        upload_id,
-    }))
+    Ok(StatusCode::NO_CONTENT)
+
 }
 
-pub async fn get_photo(
+pub async fn get_picture(
     Path(upload_id): Path<String>,
 ) -> Result<Response, StatusCode> {
     let path = format!("./uploads/{}.jpg", upload_id);
 
-    println!("Recherche de la photo : {}", path);
+    println!("Recherche de la picture : {}", path);
 
     let data = tokio::fs::read(&path)
         .await
         .map_err(|e| {
-            println!("Erreur lecture photo : {}", e);
+            println!("Erreur lecture picture : {}", e);
             StatusCode::NOT_FOUND
         })?;
 
-    println!("Photo trouvée : {} octets", data.len());
+    println!("picture trouvée : {} octets", data.len());
 
     Response::builder()
         .header(header::CONTENT_TYPE, "image/jpeg")

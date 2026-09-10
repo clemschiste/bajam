@@ -20,7 +20,7 @@ pub async fn index(
     let heartbeat = sqlx::query_as!(
         Heartbeat,
         r#"
-            SELECT latitude, longitude, timestamp, description, upload_id
+            SELECT latitude, longitude, timestamp, description, picture_id
             FROM heartbeats
             ORDER BY timestamp DESC
             LIMIT 1
@@ -44,7 +44,7 @@ pub async fn index(
         longitude: heartbeat.longitude,
         timestamp: heartbeat.timestamp,
         description: heartbeat.description,
-        upload_id: heartbeat.upload_id,
+        picture_id: heartbeat.picture_id,
         history: state.history.clone(),
     };
 
@@ -64,7 +64,7 @@ pub async fn index(
         longitude: response.longitude,
         timestamp: response.timestamp.clone(),
         description: response.description.clone().unwrap_or_default(),
-        upload_id: response.upload_id.clone().unwrap_or_default(),
+        picture_id: response.picture_id.clone().unwrap_or_default(),
         history_json,
     };
 
@@ -86,7 +86,7 @@ struct HelloTemplate {
     longitude: f64,
     timestamp: String,
     description: String,
-    upload_id: String,
+    picture_id: String,
     history_json: String,
 }
 

@@ -13,7 +13,7 @@ pub struct Heartbeat {
     pub longitude: f64,
     pub timestamp: String,
     pub description: Option<String>,
-    pub upload_id: Option<String>,
+    pub picture_id: Option<String>,
 }
 // Heartbeat response. Inclut un historique des positions
 #[derive(Serialize, Deserialize, Debug)]
@@ -22,7 +22,7 @@ pub struct HeartbeatResponse {
     pub longitude: f64,
     pub timestamp: String,
     pub description: Option<String>,
-    pub upload_id: Option<String>,
+    pub picture_id: Option<String>,
     pub history: Vec<Heartbeat>, // Pour map libre js -> [longitude, latitude]
 }
 

@@ -3,22 +3,30 @@ use axum::{Json, extract::State};
 use axum::http::StatusCode;
 use sqlx::Result;
 use crate::AppState;
+use uuid::Uuid;
+
+#[derive(Serialize)]
+pub struct HeartbeatResponse {
+    pub picture_id: Uuid,
+}
 
 pub async fn heartbeat_post(
     State(state): State<AppState>,
     Json(payload): Json<HeartbeatPost>
-) -> Result<StatusCode, (StatusCode, String)> {
+) -> Result<Json<HeartbeatResponse>, (StatusCode, String)> {
+
+    let picture_id = Uuid::new_v4();
 
     sqlx::query(
        r#"
-           INSERT INTO heartbeats (latitude, longitude, description, upload_id)
+           INSERT INTO heartbeats (latitude, longitude, description, picture_id)
            VALUES (?, ?, ?, ?)
        "#
     )
     .bind(payload.latitude)
     .bind(payload.longitude)
     .bind(payload.description)
-    .bind(payload.upload_id)
+    .bind(picture_id.to_string())
     .execute(&state.db)
     .await
     .map_err(|e| {
@@ -26,7 +34,12 @@ pub async fn heartbeat_post(
         (StatusCode::INTERNAL_SERVER_ERROR, format!("Database error : {e}"))
     })?;
 
-    Ok(StatusCode::NO_CONTENT)
+    Ok(Json(
+        HeartbeatResponse {
+            picture_id: picture_id
+        }
+      )
+    )
 }
 
 
@@ -39,7 +52,7 @@ pub struct HeartbeatPost {
     #[serde(deserialize_with = "string_or_float")]
     longitude: f64,
     description: Option<String>,
-    upload_id: Option<String>,
+    picture_id: Option<String>,
 }
 
 fn string_or_float<'de, D>(deserializer: D) -> Result<f64, D::Error>
