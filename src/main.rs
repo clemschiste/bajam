@@ -15,6 +15,7 @@ mod api;
 use crate::api::heartbeat_post::*;
 use crate::api::index::*;
 use crate::api::upload::*;
+use crate::api::user::*;
 use api::logger;
 
 // Serveur
@@ -34,6 +35,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/heartbeat", post(heartbeat_post))
         .route("/upload/{picture_id}", post(post_picture))
         .route("/image/{picture_id}", get(get_picture))
+        .route("/user", post(register_user))
         .nest_service("/static", ServeDir::new("static"))
         .layer(DefaultBodyLimit::max(20 * 1024 * 1024))
         .layer(from_fn(logger))
@@ -48,4 +50,3 @@ async fn main() -> anyhow::Result<()> {
 
     Ok(())
 }
-

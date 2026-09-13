@@ -24,6 +24,7 @@ clap = { version = "4.6.6", features = ["derive"] }
 uuid = { version = "1.26.0", features = ["serde", "v4"]}
 askama = "0.16.1"
 image = "0.25.10"
+bcrypt = "0.19.3"
 
 [workspace.dependencies]
 anyhow = "1.0.101"

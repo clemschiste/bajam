@@ -36,7 +36,7 @@ pub async fn heartbeat_post(
 
     Ok(Json(
         HeartbeatResponse {
-            picture_id: picture_id
+            picture_id
         }
       )
     )

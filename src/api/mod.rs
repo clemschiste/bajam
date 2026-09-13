@@ -1,6 +1,7 @@
 pub mod heartbeat_post;
 pub mod index;
 pub mod upload;
+pub mod user;
 
 use serde::{Deserialize, Serialize};
 use axum::{extract::Request, middleware::Next, response::Response};
