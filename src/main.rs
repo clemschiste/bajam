@@ -16,7 +16,7 @@ use crate::api::heartbeat_post::*;
 use crate::api::index::*;
 use crate::api::upload::*;
 use crate::api::user::*;
-use api::logger;
+use api::{logger, auth};
 
 // Serveur
 #[tokio::main]
@@ -31,14 +31,16 @@ async fn main() -> anyhow::Result<()> {
     let state = AppState::new(db).await?;
     
     let app = Router::new()
-        .route("/", get(index))
-        .route("/heartbeat", post(heartbeat_post))
+        .route("/user/new", post(register_user)) // Create a new user
+        .route("/user/login", post(user_login)) // Verif + token to user
+        .route("/", get(index)) // Display the index.html template (last heartbeat loaded)
+        .route("/heartbeat", post(heartbeat_post)) // Create a new heartbeat
         .route("/upload/{picture_id}", post(post_picture))
         .route("/image/{picture_id}", get(get_picture))
-        .route("/user", post(register_user))
         .nest_service("/static", ServeDir::new("static"))
         .layer(DefaultBodyLimit::max(20 * 1024 * 1024))
         .layer(from_fn(logger))
+        .layer(from_fn(auth))
         .with_state(state);
 
     // adresse d'écoute

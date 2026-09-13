@@ -4,7 +4,7 @@ pub mod upload;
 pub mod user;
 
 use serde::{Deserialize, Serialize};
-use axum::{extract::Request, middleware::Next, response::Response};
+use axum::{extract::Request, http::StatusCode, middleware::Next, response::Response};
 use std::time::Instant;
 
 // SQL struct
@@ -44,3 +44,14 @@ pub async fn logger(req: Request, next: Next) -> Response {
     response
 }
 
+// La response fait transiter la requete vers la route méthode.
+// Tout ce qu'il y a avant est prévu pour check et intercepter avec une
+// Err(StatusCode::UNAUTHORIZED).
+// Il faut donc lire la requete et notamment son header Authorization: Bearer *UUid*
+// Décode le token, check la db -> get user_id
+pub async fn auth(req: Request, next: Next) -> Result<Response, StatusCode> {
+
+    // Logique
+    
+    Ok(next.run(req).await)
+}
