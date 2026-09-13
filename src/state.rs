@@ -1,5 +1,5 @@
 use sqlx::{SqlitePool};
-use crate::api::Heartbeat;
+use crate::api::index::Heartbeat;
 use sqlx::{Pool, Result, Sqlite, sqlite::SqlitePoolOptions, migrate::Migrator};
 
 #[derive(Clone)]

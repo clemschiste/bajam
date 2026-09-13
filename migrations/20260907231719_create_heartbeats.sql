@@ -8,5 +8,5 @@ CREATE TABLE heartbeats (
     latitude FLOAT NOT NULL,
     longitude FLOAT NOT NULL,
     description TEXT,
-    timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

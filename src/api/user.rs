@@ -1,9 +1,11 @@
-use bcrypt::{verify};
+use bcrypt::verify;
 use serde::{Deserialize, Serialize};
 use axum::{Json, extract::State};
-use axum::http::StatusCode;
+use axum::http::{StatusCode, header};
 use uuid::Uuid;
 use sha2::{Sha256, Digest};
+use axum::{extract::Request, middleware::Next, response::Response};
+use chrono::{Duration, NaiveDateTime, Utc};
 use crate::AppState;
 
 #[derive(Deserialize, Debug)]
@@ -101,15 +103,17 @@ pub async fn user_login(
     let token = Uuid::new_v4();
     let hashed_token = Sha256::digest(token.as_bytes());
     let hash = hex::encode(hashed_token);
+    let expiration = Utc::now() + chrono::Duration::days(30);
         
     sqlx::query(
         r#"
           INSERT INTO sessions (token_hash, user_id, expires_at)
-          VALUES (?, ?, NOW() + INTERVAL '30 days')  
+          VALUES (?, ?, ?)  
         "#
     )
     .bind(hash)
     .bind(user.id)
+    .bind(Utc::now().naive_utc() + Duration::days(30))
     .execute(&state.db)
     .await
     .map_err(|e| {
@@ -122,4 +126,54 @@ pub async fn user_login(
             LoginResponse { token }
         )
     )
+}
+
+// Sql Struct
+#[allow(unused)]
+pub struct Session {
+    pub user_id: i64,
+    pub expires_at: NaiveDateTime,
+}
+// La response fait transiter la requete vers la route méthode.
+// Tout ce qu'il y a avant est prévu pour check et intercepter avec une
+// Err(StatusCode::UNAUTHORIZED).
+// Il faut donc lire la requete et notamment son header Authorization: Bearer *UUid*
+// Décode le token, check la db -> get user_id
+ 
+pub async fn auth(State(state): State<AppState>, mut req: Request, next: Next) -> Result<Response, (StatusCode, String)> {
+
+    let bearer = req.headers()
+        .get(header::AUTHORIZATION)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.strip_prefix("Bearer "))
+        .ok_or((
+            StatusCode::UNAUTHORIZED,
+            "Invalid authorization header".to_string(),
+        ))?;
+
+    let hashed_bearer_token = Sha256::digest(bearer.as_bytes());
+    let hash = hex::encode(hashed_bearer_token);
+
+    // Check if the bearer token corresponds to a valid session
+    let session_opt = sqlx::query_as!(
+        Session,
+        r#"
+          SELECT user_id, expires_at
+          FROM sessions
+          WHERE token_hash = $1
+              AND expires_at > CURRENT_TIMESTAMP;  
+        "#, hash
+    )
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid session token".to_string()))?;
+
+    let session = match session_opt {
+        Some(session) => session,
+        None => return Err((StatusCode::UNAUTHORIZED, "Invalid session token".to_string()))
+    };
+
+    req.extensions_mut().insert(session.user_id);
+    
+    Ok(next.run(req).await)
 }

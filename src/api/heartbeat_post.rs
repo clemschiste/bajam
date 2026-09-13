@@ -6,14 +6,14 @@ use crate::AppState;
 use uuid::Uuid;
 
 #[derive(Serialize)]
-pub struct HeartbeatResponse {
+pub struct ImageHandle {
     pub picture_id: Uuid,
 }
 
 pub async fn heartbeat_post(
     State(state): State<AppState>,
     Json(payload): Json<HeartbeatPost>
-) -> Result<Json<HeartbeatResponse>, (StatusCode, String)> {
+) -> Result<Json<ImageHandle>, (StatusCode, String)> {
 
     let picture_id = Uuid::new_v4();
 
@@ -35,13 +35,12 @@ pub async fn heartbeat_post(
     })?;
 
     Ok(Json(
-        HeartbeatResponse {
+        ImageHandle {
             picture_id
         }
       )
     )
 }
-
 
 // Post struct (timestamp created at INSERTION)
 // Iphone inable to send floats in the json position...
@@ -73,5 +72,5 @@ where
             .map_err(serde::de::Error::custom),
     }
 }
-
+ 
 
