@@ -5,18 +5,21 @@ use tower_http::services::ServeDir;
 use dotenv::dotenv;
 use std::env;
 
+mod routes;
+mod models;
+mod middleware;
 mod config;
-use crate::config::get_config_from_args;
-
 mod state;
-use state::{AppState, db_connect};
 
-mod api;
-use crate::api::heartbeat_post::*;
-use crate::api::index::*;
-use crate::api::upload::*;
-use crate::api::user::*;
-use api::logger;
+use config::get_config_from_args;
+use state::{AppState, db_connect};
+use crate::routes::heartbeat_post::*;
+use crate::routes::index::*;
+use crate::routes::upload::*;
+use crate::routes::user_login::*;
+use crate::routes::user_register::*;
+use crate::middleware::logger::*;
+use crate::middleware::auth::*;
 
 // Serveur
 #[tokio::main]
@@ -37,8 +40,8 @@ async fn main() -> anyhow::Result<()> {
         
     
     let app = Router::new()
-        .route("/user/new", post(register_user)) // Create a new user
-        .route("/user/login", post(user_login)) // Verif + token to user
+        .route("/user/new", post(register)) // Create a new user
+        .route("/user/login", post(login)) // Verif + token to user
         .route("/", get(index)) // Display the index.html template (last heartbeat loaded)
         .route("/image/{picture_id}", get(get_picture))
         .merge(protected_routes)

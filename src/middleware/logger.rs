@@ -1,8 +1,3 @@
-pub mod heartbeat_post;
-pub mod index;
-pub mod upload;
-pub mod user;
-
 use axum::{extract::Request, middleware::Next, response::Response};
 use std::time::Instant;
 

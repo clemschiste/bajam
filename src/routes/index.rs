@@ -1,11 +1,10 @@
-// Renders HTML on GET /
 use askama::Template;
 use axum::response::Html;
 use axum::extract::State;
 use axum::http::StatusCode;
 use chrono::NaiveDateTime;
-use serde::{Deserialize, Serialize};
 
+use crate::models::heartbeat::*;
 use crate::AppState;
 
 // Index is called on root_path and serves an updated Html<String>
@@ -59,7 +58,7 @@ pub async fn index(
 
    // The askama template (aiming at templates/index.html) is constructed
    // with the last attributes fetched
-    let template = HelloTemplate {
+    let template = IndexTemplate {
         latitude: response.latitude,
         longitude: response.longitude,
         timestamp: response.timestamp.clone(),
@@ -81,33 +80,11 @@ pub async fn index(
 
 #[derive(Template)] // this will generate the code...
 #[template(path = "index.html")]
-struct HelloTemplate {
+struct IndexTemplate {
     latitude: f64,
     longitude: f64,
     timestamp: NaiveDateTime,
     description: String,
     picture_id: String,
     history_json: String,
-}
-
-
-// Heartbeat response. Inclut un historique des positions
-#[derive(Serialize, Deserialize, Debug)]
-pub struct HeartbeatResponse {
-    pub latitude: f64,
-    pub longitude: f64,
-    pub timestamp: NaiveDateTime,
-    pub description: Option<String>,
-    pub picture_id: Option<String>,
-    pub history: Vec<Heartbeat>, // Pour map libre js -> [longitude, latitude]
-}
-
-// SQL struct
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Heartbeat {
-    pub latitude: f64,
-    pub longitude: f64,
-    pub timestamp: NaiveDateTime,
-    pub description: Option<String>,
-    pub picture_id: Option<String>,
 }
