@@ -1,5 +1,6 @@
 use axum::extract::DefaultBodyLimit;
 use axum::middleware::{from_fn, from_fn_with_state};
+use axum::routing::delete;
 use axum::{Router, routing::{get, post}};
 use tower_http::services::ServeDir;
 use dotenv::dotenv;
@@ -10,6 +11,7 @@ mod models;
 mod middleware;
 mod config;
 mod state;
+mod db;
 
 use config::get_config_from_args;
 use state::{AppState, db_connect};
@@ -18,6 +20,7 @@ use crate::routes::index::*;
 use crate::routes::upload::*;
 use crate::routes::user_login::*;
 use crate::routes::user_register::*;
+use crate::routes::user_logout::*;
 use crate::middleware::logger::*;
 use crate::middleware::auth::*;
 
@@ -36,6 +39,7 @@ async fn main() -> anyhow::Result<()> {
     let protected_routes = Router::new()
         .route("/heartbeat", post(heartbeat_post)) // Create a new heartbeat
         .route("/upload/{picture_id}", post(post_picture)) // Upload in conjuction with a hb
+        .route("/user/logout", delete(session_logout))
         .layer(from_fn_with_state(state.clone(), auth)); // auth middleware
         
     

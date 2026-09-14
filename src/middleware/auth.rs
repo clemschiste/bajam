@@ -27,6 +27,7 @@ pub async fn auth(State(state): State<AppState>, mut req: Request, next: Next) -
     let hash = hex::encode(hashed_bearer_token);
 
     // Check if the bearer token corresponds to a valid session
+    // It can be nice to separate the expires at comparaison to have an error dedicated to the session reset
     let session_opt = sqlx::query_as!(
         Session,
         r#"
