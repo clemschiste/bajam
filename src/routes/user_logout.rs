@@ -1,6 +1,6 @@
 use axum::{Extension, extract::State, http::StatusCode};
 use crate::state::AppState;
-use crate::db::delete_session::sql_delete_session;
+use crate::db::delete_session::sql_delete_user_session;
 
 
 pub async fn session_logout(
@@ -10,10 +10,9 @@ pub async fn session_logout(
 
   print!("User logout request received... ");
 
-  sql_delete_session(state, user_id).await?;
+  sql_delete_user_session(&state, &user_id).await?;
 
   println!("Done. Session deleted.");
       
   Ok(StatusCode::NO_CONTENT)  
 }
-

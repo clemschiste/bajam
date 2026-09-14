@@ -12,6 +12,7 @@ mod middleware;
 mod config;
 mod state;
 mod db;
+mod tasks;
 
 use config::get_config_from_args;
 use state::{AppState, db_connect};
@@ -23,6 +24,7 @@ use crate::routes::user_register::*;
 use crate::routes::user_logout::*;
 use crate::middleware::logger::*;
 use crate::middleware::auth::*;
+use crate::tasks::clean::clean_expired_sessions;
 
 // Serveur
 #[tokio::main]
@@ -33,16 +35,20 @@ async fn main() -> anyhow::Result<()> {
     let database_url = env::var("DATABASE_URL")?;
     let db = db_connect(&database_url).await?;
 
-    // load db + history    
+    // Loads database + history
     let state = AppState::new(db).await?;
 
+    // Background tasks
+    tokio::spawn(clean_expired_sessions(state.clone()));
+
+    // Protected routes (requires valide Authorization header)
     let protected_routes = Router::new()
         .route("/heartbeat", post(heartbeat_post)) // Create a new heartbeat
         .route("/upload/{picture_id}", post(post_picture)) // Upload in conjuction with a hb
         .route("/user/logout", delete(session_logout))
         .layer(from_fn_with_state(state.clone(), auth)); // auth middleware
-        
     
+    // Full router
     let app = Router::new()
         .route("/user/new", post(register)) // Create a new user
         .route("/user/login", post(login)) // Verif + token to user
@@ -54,12 +60,13 @@ async fn main() -> anyhow::Result<()> {
         .layer(from_fn(logger))
         .with_state(state);
 
-    // adresse d'écoute
+    // Listening adress
     let tcp_addr = config.tcp_addr;
     let listener = tokio::net::TcpListener::bind(&tcp_addr).await?;
-    println!("Serveur lancé sur http://{}", tcp_addr);
+    println!("Serveur available at: http://{}", tcp_addr);
 
     axum::serve(listener, app).await?;
 
     Ok(())
 }
+

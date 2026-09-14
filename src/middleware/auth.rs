@@ -4,6 +4,7 @@ use axum::extract::{State, Request};
 use sha2::{Sha256, Digest};
 use crate::models::session::Session;
 use crate::AppState;
+use crate::db::delete_session::sql_delete_user_session;
 
 
 // La response fait transiter la requete vers la route méthode.
@@ -34,7 +35,6 @@ pub async fn auth(State(state): State<AppState>, mut req: Request, next: Next) -
           SELECT user_id, expires_at
           FROM sessions
           WHERE token_hash = $1
-              AND expires_at > CURRENT_TIMESTAMP;  
         "#, hash
     )
     .fetch_optional(&state.db)
@@ -45,6 +45,11 @@ pub async fn auth(State(state): State<AppState>, mut req: Request, next: Next) -
         Some(session) => session,
         None => return Err((StatusCode::UNAUTHORIZED, "Invalid session token".to_string()))
     };
+
+    if session.expires_at < chrono::Utc::now().naive_utc() {
+        sql_delete_user_session(&state, &session.user_id).await?;
+        return Err((StatusCode::UNAUTHORIZED, "Session expired".to_string()))
+    }
 
     req.extensions_mut().insert(session.user_id);
     

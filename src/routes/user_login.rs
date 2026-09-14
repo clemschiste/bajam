@@ -7,7 +7,6 @@ use chrono::{Duration, Utc};
 use crate::AppState;
 use crate::models::user::{User, LoginUser};
 use crate::models::session::LoginResponse;
-use crate::db::delete_session::sql_delete_session;
 
 // Here we want to check if the username/passord input is valid
 // Then handle a UUid token that we sha256 hash in the db
