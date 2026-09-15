@@ -32,7 +32,7 @@ pub async fn auth(State(state): State<AppState>, mut req: Request, next: Next) -
     let session_opt = sqlx::query_as!(
         Session,
         r#"
-          SELECT user_id, expires_at
+          SELECT token_hash, user_id, expires_at
           FROM sessions
           WHERE token_hash = $1
         "#, hash

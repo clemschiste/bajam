@@ -1,15 +1,16 @@
 use chrono::NaiveDateTime;
-use serde::Serialize;
-use uuid::Uuid;
+use serde::{Deserialize, Serialize};
 //
 // Sql Struct
+#[derive(Debug)]
 #[allow(unused)]
 pub struct Session {
+    pub token_hash: String,
     pub user_id: i64,
     pub expires_at: NaiveDateTime,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct LoginResponse {
-    pub token: Uuid,
+    pub token: String,
 }

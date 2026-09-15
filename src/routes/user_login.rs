@@ -41,10 +41,10 @@ pub async fn login(
 
     // Give token for auth and insert it into the session table hashed
     // Here we opt for Uuid::v4 sha256 hashed in the db 
-    let token = Uuid::new_v4();
+    let token = Uuid::new_v4().to_string();
     let hashed_token = Sha256::digest(token.as_bytes());
     let hash = hex::encode(hashed_token);
-        
+
     sqlx::query(
         r#"
           INSERT INTO sessions (token_hash, user_id, expires_at)

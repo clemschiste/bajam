@@ -1,7 +1,7 @@
 use axum::http::StatusCode;
 use crate::state::AppState;
 
-pub async fn sql_delete_user_session(state: &AppState, user_id: &i64) -> Result<(), (StatusCode, String)> {
+pub async fn sql_delete_user_session(state: &AppState, user_id: &i64) -> Result<StatusCode, (StatusCode, String)> {
   sqlx::query("DELETE FROM sessions WHERE user_id = (?)")
     .bind(user_id)
     .execute(&state.db)
@@ -11,7 +11,7 @@ pub async fn sql_delete_user_session(state: &AppState, user_id: &i64) -> Result<
         (StatusCode::INTERNAL_SERVER_ERROR, format!("Database error : {e}"))
     })?;
 
-  Ok(())
+  Ok(StatusCode::OK)
   
 }
 
