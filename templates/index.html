@@ -1,95 +1,161 @@
 <!DOCTYPE html>
+
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <title>Mes positions</title>
 
-    <link rel="stylesheet" href="static/style.css"/>
-    <link rel="icon" href="/favicon.ico"/>
+```
+<link rel="stylesheet" href="static/style.css"/>
+<link rel="icon" href="/favicon.ico"/>
 
-    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@^6.7.0/dist/maplibre-gl.css" />
-    <style>
-      #map {
-        height: 800px;
-      }
-    </style>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/maplibre-gl@^6.7.0/dist/maplibre-gl.css"
+/>
+
+<style>
+  #map {
+    height: 1000px;
+    position: relative;
+  }
+
+  #map-style-selector {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1;
+    background: white;
+    padding: 8px;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  #map-style-selector select {
+    padding: 5px;
+  }
+
+  .map-popup-image {
+    display: block;
+    width: 250px;
+    max-height: 250px;
+    object-fit: cover;
+    margin-top: 10px;
+    border-radius: 4px;
+  }
+</style>
+```
+
   </head>
 
   <body>
-  <!-- <main class="dashboard-container"> -->
-    <!-- <div class="card"> -->
-      <!-- <img -->
-        <!-- class="position-photo" -->
-        <!-- src="/image/{{ picture_id }}" -->
-        <!-- alt="Photo de la position" -->
-      <!-- > -->
-    <!-- </div> -->
-      <!-- <aside class="card"> -->
-    <div id="map"></div>
-  <!-- </aside> -->
-<!-- <div class ="card"> -->
-      <!-- {{ timestamp }} : -->
-      <!-- {{ description }} -->
-    <!-- </div> -->
-  <!-- </main> -->
+    <div id="map">
+      <div id="map-style-selector">
+        <label for="map-style">Style :</label>
+        <select id="map-style">
+          <option value="globe">Globe</option>
+          <option value="positron">Positron</option>
+        </select>
+      </div>
+    </div>
 
+```
+<script type="module">
+  import * as maplibregl from "https://unpkg.com/maplibre-gl@6.7.0/dist/maplibre-gl.mjs";
 
+  const styles = {
+    globe: "https://demotiles.maplibre.org/globe.json",
+    positron: "https://tiles.openfreemap.org/styles/positron"
+  };
 
+  const currentPosition = [{{ longitude }}, {{ latitude }}];
 
+  const map = new maplibregl.Map({
+    container: "map",
+    style: styles.globe,
+    center: [-50, 0],
+    zoom: 2.5,
+    minZoom: 2.5,
+    maxZoom: 20,
+  });
 
-
-  <script type="module">
-    import * as maplibregl from "https://unpkg.com/maplibre-gl@6.7.0/dist/maplibre-gl.mjs";
+  async function loadMarkers() {
+    // Position actuelle
     const currentPosition = [{{ longitude }}, {{ latitude }}];
 
-    // Création de la carte
-    const map = new maplibregl.Map({
-      container: "map",
-      // style: "https://tiles.openfreemap.org/styles/liberty",
-      // style: "https://tiles.openfreemap.org/styles/positron",
-      style: "https://demotiles.maplibre.org/globe.json",
-      center: [-50, 0],
-      zoom: 2.5,
-      minZoom: 2.5,
-      maxZoom: 20,
-    });
+    const currentPopup = new maplibregl.Popup({ offset: 25 })
+      .setHTML(`
+        <h2>{{ timestamp }}</h2>
 
-    // Récupération des positions
-    async function loadMarkers() {
-      // Position actuelle
-      const currentPosition = [{{ longitude }}, {{ latitude }}];
+        <p>{{ description }}</p>
 
+        <img
+          class="map-popup-image"
+          src="/image/{{ picture_id }}"
+          alt="Photo de la position"
+        >
+      `);
 
-      // Markers des anciennes positions
-      for (const beat of {{ history_json|safe }}) {
-        const position = [beat.longitude, beat.latitude];
+    // Anciennes positions
+    for (const beat of {{ history_json|safe }}) {
+      const position = [beat.longitude, beat.latitude];
 
-      const popup = new maplibregl.Popup({offset: 25})
-        .setHTML(`<h1>${beat.timestamp}</h1>${beat.description}`);
+      const historyPopup = new maplibregl.Popup({ offset: 25 })
+        .setHTML(`
+          <h2>${beat.timestamp}</h2>
+
+          <p>${beat.description}</p>
+
+          ${
+            beat.picture_id
+              ? `
+                <img
+                  class="map-popup-image"
+                  src="/image/${beat.picture_id}"
+                  alt="Photo de la position"
+                >
+              `
+              : ""
+          }
+        `);
 
       new maplibregl.Marker({
         color: "#888888",
       })
         .setLngLat(position)
-        .setPopup(popup)
+        .setPopup(historyPopup)
         .addTo(map);
-      }
-      // Marker de la position actuelle
-      new maplibregl.Marker({
-        color: "#ff0000",
-      })
-        .setLngLat(currentPosition)
-        .addTo(map);
-
-      // Centrer la carte sur la position actuelle
-      map.flyTo({
-        center: currentPosition,
-        zoom: 10,
-      });
     }
 
-    // Chargement initial
-    loadMarkers();
-  </script>
+    // Position actuelle
+    new maplibregl.Marker({
+      color: "#ff0000",
+    })
+      .setLngLat(currentPosition)
+      .setPopup(currentPopup)
+      .addTo(map);
+
+    // Centrer sur la position actuelle
+    map.flyTo({
+      center: currentPosition,
+      zoom: 10,
+    });
+  }
+
+  // Changement de style
+  const styleSelector = document.getElementById("map-style");
+
+  styleSelector.addEventListener("change", (event) => {
+    const selectedStyle = event.target.value;
+
+    map.setStyle(styles[selectedStyle]);
+  });
+
+  // Chargement initial
+  loadMarkers();
+</script>
+```
+
   </body>
 </html>
+

@@ -61,7 +61,7 @@ pub async fn index(
     let template = IndexTemplate {
         latitude: response.latitude,
         longitude: response.longitude,
-        timestamp: response.timestamp.clone(),
+        timestamp: response.timestamp,
         description: response.description.clone().unwrap_or_default(),
         picture_id: response.picture_id.clone().unwrap_or_default(),
         history_json,
