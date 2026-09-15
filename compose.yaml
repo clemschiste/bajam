@@ -8,6 +8,8 @@ services:
       TCP_LOCAL: 0.0.0.0:3000
     volumes:
       - bajam_data:/app/data
+      - bajam_uploads:/app/uploads
 
 volumes:
   bajam_data:
+  bajam_uploads:
