@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT latitude, longitude, timestamp, description, picture_id\n            FROM heartbeats\n            ORDER BY timestamp DESC\n            LIMIT 1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "latitude",
+        "ordinal": 0,
+        "type_info": "Float"
+      },
+      {
+        "name": "longitude",
+        "ordinal": 1,
+        "type_info": "Float"
+      },
+      {
+        "name": "timestamp",
+        "ordinal": 2,
+        "type_info": "Datetime"
+      },
+      {
+        "name": "description",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "picture_id",
+        "ordinal": 4,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "d9adcff54e4a4498787d3704d255cb1f7da9d5a4654d1b8fb1ca9508e34cbc17"
+}

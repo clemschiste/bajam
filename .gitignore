@@ -2,5 +2,6 @@
 .env
 *.sqlite
 *.db
-*.json
+hb.json
+new_user.json
 uploads/*
