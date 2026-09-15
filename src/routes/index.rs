@@ -5,7 +5,7 @@ use axum::http::StatusCode;
 use chrono::NaiveDateTime;
 
 use crate::models::heartbeat::*;
-use crate::AppState;
+use crate::state::AppState;
 
 // Index is called on root_path and serves an updated Html<String>
 // based on the last heartbeat on the database

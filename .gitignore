@@ -2,5 +2,5 @@
 .env
 *.sqlite
 *.db
-hb.json
+*.json
 uploads/*

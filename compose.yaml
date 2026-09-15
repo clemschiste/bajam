@@ -1,0 +1,13 @@
+services:
+  bajam:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_PATH: ./data/app.db
+      TCP_LOCAL: 0.0.0.0:3000
+    volumes:
+      - bajam_data:/app/data
+
+volumes:
+  bajam_data:

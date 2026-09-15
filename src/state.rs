@@ -37,11 +37,26 @@ impl AppState {
     }
 }
 
+use std::fs::OpenOptions;
+
 pub async fn db_connect(path: &str) -> Result<Pool<Sqlite>, sqlx::Error> {
-    println!("Connecting to db at {}.", path);
+    print!("Attempting to create db file in {}... ", path);
+
+    OpenOptions::new()
+        .create(true)
+        .truncate(false)
+        .write(true)
+        .open(path)
+        .map_err(sqlx::Error::Io)?;
+
+    println!("Success.");
+    let database_url = format!("sqlite://{}", path);
+
+    print!("Connecting to db at {}... ", database_url);
+    
     let db = SqlitePoolOptions::new()
         .max_connections(3)
-        .connect(path)
+        .connect(&database_url)
         .await?;
 
     print!("Checking for migrations... ");

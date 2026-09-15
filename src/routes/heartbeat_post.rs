@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize, Deserializer};
 use axum::{Json, extract::State};
 use axum::http::StatusCode;
 use sqlx::Result;
-use crate::AppState;
+use crate::state::AppState;
 use uuid::Uuid;
 
 #[derive(Serialize)]

@@ -12,9 +12,9 @@ async fn main() -> anyhow::Result<()> {
     let db_name = env::args().nth(1).unwrap_or_else(|| "app.db".to_string());
     let db_path = Path::new(&db_name);
 
-    OpenOptions::new().create(true).write(true).open(db_path)?;
+    OpenOptions::new().create(true).truncate(false).write(true).open(db_path)?;
 
-    fs::write(".env", format!("DATABASE_URL=sqlite://{db_name}\nTCP_LOCAL=127.0.0.1:3000\n"))?;
+    fs::write(".env", format!("DATABASE_PATH=./data/{db_name}\nTCP_LOCAL=127.0.0.1:3000\n"))?;
 
     println!("✓ Database: {db_name}");
     println!("✓ .env created");

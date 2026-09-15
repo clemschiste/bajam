@@ -7,6 +7,9 @@ pub async fn clean_expired_sessions(state: AppState) -> anyhow::Result<()> {
 
     loop {
         interval.tick().await;
-        sql_delete_expired_sessions(&state).await?;
+        match sql_delete_expired_sessions(&state).await {
+          Ok(count) => println!("{count} sessions were deleted"),
+          Err(e) => eprintln!("Session cleanup failed (session table probably empty): {e:#}"),
+        };
     }
 }

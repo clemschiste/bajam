@@ -3,7 +3,7 @@ use axum::{middleware::Next, response::Response};
 use axum::extract::{State, Request};
 use sha2::{Sha256, Digest};
 use crate::models::session::Session;
-use crate::AppState;
+use crate::state::AppState;
 use crate::db::delete_session::sql_delete_user_session;
 
 

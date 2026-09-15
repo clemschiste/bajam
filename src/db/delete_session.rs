@@ -15,15 +15,11 @@ pub async fn sql_delete_user_session(state: &AppState, user_id: &i64) -> Result<
   
 }
 
-pub async fn sql_delete_expired_sessions(state: &AppState) -> anyhow::Result<()> {
+pub async fn sql_delete_expired_sessions(state: &AppState) -> anyhow::Result<u64> {
   let result = sqlx::query("DELETE FROM sessions WHERE expired_at < datetime('now')")
     .execute(&state.db)
     .await?;
 
-  let deleted = result.rows_affected();
-
-  println!("{deleted} session(s) were deleted during cleanup");
-
-  Ok(())
-  
+  // return number of sessions deleted
+  Ok(result.rows_affected())
 }

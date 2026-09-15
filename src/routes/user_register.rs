@@ -1,6 +1,6 @@
 use axum::{Json, extract::State};
 use axum::http::{StatusCode};
-use crate::AppState;
+use crate::state::AppState;
 use crate::models::user::{RegisterPost};
 
 // Function to create a user in the database with hashed_password based on post
