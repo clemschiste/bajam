@@ -19,7 +19,7 @@ pub async fn index(
     let heartbeat = sqlx::query_as!(
         Heartbeat,
         r#"
-            SELECT latitude, longitude, timestamp, description, picture_id
+            SELECT latitude, longitude, timestamp, description, picture_id, user_id
             FROM heartbeats
             ORDER BY timestamp DESC
             LIMIT 1
