@@ -20,4 +20,5 @@ pub struct Heartbeat {
     pub timestamp: NaiveDateTime,
     pub description: Option<String>,
     pub picture_id: Option<String>,
+    pub user_id: i64,
 }
