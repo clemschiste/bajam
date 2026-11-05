@@ -63,7 +63,7 @@ pub async fn index(
         longitude: response.longitude,
         timestamp: response.timestamp,
         description: response.description.clone().unwrap_or_default(),
-        picture_id: response.picture_id.clone().unwrap_or_default(),
+        picture_id: response.picture_id.clone(),
         history_json,
     };
 

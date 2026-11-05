@@ -8,7 +8,7 @@ pub struct HeartbeatResponse {
     pub longitude: f64,
     pub timestamp: NaiveDateTime,
     pub description: Option<String>,
-    pub picture_id: Option<String>,
+    pub picture_id: String,
     pub history: Vec<Heartbeat>, // Pour map libre js -> [longitude, latitude]
 }
 
@@ -19,6 +19,6 @@ pub struct Heartbeat {
     pub longitude: f64,
     pub timestamp: NaiveDateTime,
     pub description: Option<String>,
-    pub picture_id: Option<String>,
+    pub picture_id: String,
     pub user_id: i64,
 }

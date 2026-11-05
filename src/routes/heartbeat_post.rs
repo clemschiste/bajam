@@ -1,32 +1,34 @@
 use serde::{Deserialize, Serialize, Deserializer};
-use axum::{Json, extract::State};
+use axum::{Extension, Json, extract::State};
 use axum::http::StatusCode;
 use sqlx::Result;
 use crate::state::AppState;
 use uuid::Uuid;
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ImageHandle {
     pub picture_id: Uuid,
 }
 
 pub async fn heartbeat_post(
     State(state): State<AppState>,
-    Json(payload): Json<HeartbeatPost>
+    Extension(user_id): Extension<i64>, // User id obtenu avec le auth middleware
+    Json(payload): Json<HeartbeatPost>,
 ) -> Result<Json<ImageHandle>, (StatusCode, String)> {
 
     let picture_id = Uuid::new_v4();
 
     sqlx::query(
        r#"
-           INSERT INTO heartbeats (latitude, longitude, description, picture_id)
-           VALUES (?, ?, ?, ?)
+           INSERT INTO heartbeats (latitude, longitude, description, picture_id, user_id)
+           VALUES (?, ?, ?, ?, ?)
        "#
     )
     .bind(payload.latitude)
     .bind(payload.longitude)
     .bind(payload.description)
     .bind(picture_id.to_string())
+    .bind(user_id)
     .execute(&state.db)
     .await
     .map_err(|e| {
@@ -51,7 +53,6 @@ pub struct HeartbeatPost {
     #[serde(deserialize_with = "string_or_float")]
     longitude: f64,
     description: Option<String>,
-    picture_id: Option<String>,
 }
 
 fn string_or_float<'de, D>(deserializer: D) -> Result<f64, D::Error>
