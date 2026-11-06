@@ -10,6 +10,8 @@ CREATE TABLE escapades_map (
 
     PRIMARY KEY (escapade_id, user_id),
     
-    FOREIGN KEY (escapade_id) REFERENCES escapades(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (escapade_id)
+        REFERENCES escapades(id)
+        ON DELETE CASCADE
 );

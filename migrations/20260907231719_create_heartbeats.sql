@@ -5,8 +5,11 @@ CREATE TABLE heartbeats (
 
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     picture_id TEXT UNIQUE NOT NULL,
+    escapade_id INTEGER NOT NULL,
     latitude FLOAT NOT NULL,
     longitude FLOAT NOT NULL,
     description TEXT,
-    timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (escapade_id) REFERENCES escapades(id)
 );

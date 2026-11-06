@@ -9,7 +9,7 @@ pub async fn escapade_post(
   State(state): State<AppState>,
   Extension(user_id): Extension<i64>,
   Json(payload): Json<EscapadePost>,
-) -> Result<StatusCode, (StatusCode, String)> {
+) -> Result<Json<EscapadeResponse>, (StatusCode, String)> {
   
     println!("Escapade creation request received");
 
@@ -57,11 +57,16 @@ pub async fn escapade_post(
         (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
     })?;
 
-    Ok(StatusCode::CREATED)
+    Ok(Json(EscapadeResponse{escapade_id}))
 }
 
 // Maybe add description later ?
 #[derive(Serialize, Deserialize, Debug)]
 pub struct EscapadePost {
   name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct EscapadeResponse {
+  pub escapade_id: i64,
 }

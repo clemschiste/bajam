@@ -4,7 +4,7 @@ use axum::{
 use axum::http::StatusCode;
 
 mod common;
-use bajam::routes::heartbeat_post::ImageHandle;
+use bajam::routes::{escapade_post::EscapadeResponse, heartbeat_post::ImageHandle};
 use common::*;
 use tower::ServiceExt;
 use uuid::Uuid;
@@ -13,17 +13,29 @@ use uuid::Uuid;
 // Scenario post an heartbeat
 pub async fn heartbeat_create() {
     let session = test_init_with_user("user", "secret").await;
-    
-    let response = test_post_heartbeat(
+
+    // Creation of an escapade first, getting the id
+    let escapade_response = test_post_escapade(
+        session.token.clone(),
+        session.router.clone(),
+        "Japon").await;
+
+    assert_eq!(escapade_response.status(), StatusCode::OK);
+
+    let escapade_id = test_extract_escapade_id(escapade_response).await;
+
+    // Creation of the heartbeat, inserting the escapade_id
+    let heartbeat_response = test_post_heartbeat(
         session.token,
-        session.router
+        session.router,
+        escapade_id
     ).await;
 
     // Vérifier le status HTTP
-    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(heartbeat_response.status(), StatusCode::OK);
 
     // Récupérer le body
-    let body = to_bytes(response.into_body(), usize::MAX)
+    let body = to_bytes(heartbeat_response.into_body(), usize::MAX)
         .await
         .unwrap();
 
@@ -36,7 +48,7 @@ pub async fn heartbeat_create() {
 }
 
 // Test function for posting a heartbeat
-async fn test_post_heartbeat(token: String, router: Router) -> Response<Body> {
+async fn test_post_heartbeat(token: String, router: Router, escapade_id: i64) -> Response<Body> {
     let heartbeat_body = serde_json::json!({
         "latitude": 1.22,
         "longitude": 45.33,
@@ -44,7 +56,7 @@ async fn test_post_heartbeat(token: String, router: Router) -> Response<Body> {
     });
 
     router.oneshot(
-        Request::post("/heartbeat")
+        Request::post(format!("/escapades/{}/heartbeat", escapade_id))
         .header("Authorization", format!("Bearer {}", token))
         .header("Content-Type", "application/json")
         .body(Body::from(heartbeat_body.to_string()))
@@ -53,3 +65,30 @@ async fn test_post_heartbeat(token: String, router: Router) -> Response<Body> {
     .await
     .unwrap()
 }
+
+// Test function for posting an escapade
+async fn test_post_escapade(token: String, router: Router, name: &str) -> Response<Body> {
+    let escapade_body = serde_json::json!({
+        "name": name,
+    });
+
+    router.oneshot(
+        Request::post("/escapades")
+        .header("Authorization", format!("Bearer {}", token))
+        .header("Content-Type", "application/json")
+        .body(Body::from(escapade_body.to_string()))
+        .unwrap(),
+    )
+    .await
+    .unwrap()
+}
+
+pub async fn test_extract_escapade_id(escapade_response: Response<Body>) -> i64 {
+    let escapade_body = axum::body::to_bytes(escapade_response.into_body(), usize::MAX)
+        .await.unwrap();
+    let id: EscapadeResponse = serde_json::from_slice(&escapade_body).unwrap(); 
+    id.escapade_id
+}
+
+
+// todo -> test deleting heartbeat and unauthorized deleting of heartbeat

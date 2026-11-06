@@ -1,6 +1,6 @@
 use axum::{Extension, extract::State, http::StatusCode};
 use crate::state::AppState;
-use crate::db::delete_session::sql_delete_user_session;
+use crate::db::session_queries::sql_delete_user_session;
 
 
 pub async fn session_logout(

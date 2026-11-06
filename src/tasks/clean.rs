@@ -1,4 +1,4 @@
-use crate::db::delete_session::sql_delete_expired_sessions;
+use crate::db::session_queries::sql_delete_expired_sessions;
 use crate::state::AppState;
 use std::time::Duration;
 

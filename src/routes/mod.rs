@@ -1,4 +1,6 @@
+pub mod escapade_delete;
 pub mod escapade_post;
+pub mod heartbeat_delete;
 pub mod heartbeat_post;
 pub mod index;
 pub mod router;
