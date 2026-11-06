@@ -1,3 +1,4 @@
+pub mod escapade_post;
 pub mod heartbeat_post;
 pub mod index;
 pub mod router;
