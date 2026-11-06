@@ -10,13 +10,13 @@ use bajam::{models::session::LoginResponse};
 use bajam::state::AppState;
 use bajam::routes::router::create_router;
 
-type Token = String; 
-
+#[allow(dead_code)]
 pub struct Session {
-    pub token: Token,
+    pub token: String,
     pub router: Router,
 }
 
+#[allow(dead_code)]
 pub async fn test_init_with_user(username: &str, password: &str) -> Session {
     let db = test_db().await;
     let test_state = AppState::new(db).await;
@@ -72,6 +72,7 @@ pub async fn test_extract_token_on_login(login_response: Response<Body>) -> Stri
     log.token
 }
 
+#[allow(dead_code)]
 // Test function for logging out a user, output the response
 pub async fn test_logout_user(token: &str, router: Router) -> Response<Body> {
     router.oneshot(
