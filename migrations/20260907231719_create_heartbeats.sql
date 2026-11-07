@@ -11,5 +11,7 @@ CREATE TABLE heartbeats (
     description TEXT,
     timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (escapade_id) REFERENCES escapades(id)
+    FOREIGN KEY (escapade_id)
+        REFERENCES escapades(id)
+        ON DELETE CASCADE
 );

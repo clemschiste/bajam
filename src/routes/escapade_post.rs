@@ -39,7 +39,7 @@ pub async fn escapade_post(
     sqlx::query(
         r#"
             INSERT INTO escapades_map (escapade_id, user_id, role)
-            VALUES (?, ?, 'creator')
+            VALUES (?, ?, 'admin')
         "#
     )
     .bind(escapade_id)

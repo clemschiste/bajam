@@ -26,8 +26,8 @@ pub async fn heartbeat_create() {
 
     // Creation of the heartbeat, inserting the escapade_id
     let heartbeat_response = test_post_heartbeat(
-        session.token,
-        session.router,
+        session.token.clone(),
+        session.router.clone(),
         escapade_id
     ).await;
 
@@ -45,6 +45,12 @@ pub async fn heartbeat_create() {
 
     // Vérifier que l'UUID est valide
     assert_ne!(image_handle.picture_id, Uuid::nil());
+
+    // Suppression de l'escapade
+    let escapade_deletion_response = test_delete_ascapade(session.token, session.router, escapade_id).await;
+
+    assert_eq!(escapade_deletion_response.status(), StatusCode::NO_CONTENT);
+    
 }
 
 // Test function for posting a heartbeat
@@ -90,5 +96,15 @@ pub async fn test_extract_escapade_id(escapade_response: Response<Body>) -> i64 
     id.escapade_id
 }
 
+async fn test_delete_ascapade(token: String, router: Router, escapade_id: i64) -> Response<Body> {
+    router.oneshot(
+        Request::delete(format!("/escapades/{}", escapade_id))
+        .header("Authorization", format!("Bearer {}", token))
+        .body(Body::empty())
+        .unwrap()
+    )
+    .await
+    .unwrap()
+}
 
 // todo -> test deleting heartbeat and unauthorized deleting of heartbeat

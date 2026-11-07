@@ -14,6 +14,6 @@ pub async fn escapade_delete(
   sql_delete_escapade(&state, &user_id, &escapade_id).await?;
 
   println!("Done. Escapade deleted.");
-      
+
   Ok(StatusCode::NO_CONTENT)  
 }
