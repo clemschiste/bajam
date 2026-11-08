@@ -1,6 +1,6 @@
 use axum::http::StatusCode;
-use bajam::state::AppState;
-use bajam::routes::router::create_router;
+use bajam_daemon::state::AppState;
+use bajam_daemon::routes::router::create_router;
 
 mod common;
 use common::*;

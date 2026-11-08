@@ -4,7 +4,7 @@ use axum::{
 use axum::http::StatusCode;
 
 mod common;
-use bajam::routes::{escapade_post::EscapadeResponse, heartbeat_post::ImageHandle};
+use bajam_daemon::routes::{escapade_post::EscapadeResponse, heartbeat_post::ImageHandle};
 use common::*;
 use tower::ServiceExt;
 use uuid::Uuid;

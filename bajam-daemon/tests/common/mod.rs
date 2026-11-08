@@ -6,9 +6,9 @@ use sqlx::{
     SqlitePool,
 };
 use tower::ServiceExt;
-use bajam::{models::session::LoginResponse};
-use bajam::state::AppState;
-use bajam::routes::router::create_router;
+use bajam_daemon::{models::session::LoginResponse};
+use bajam_daemon::state::AppState;
+use bajam_daemon::routes::router::create_router;
 
 #[allow(dead_code)]
 pub struct Session {
