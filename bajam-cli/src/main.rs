@@ -1,4 +1,7 @@
-use clap::{Args, Parser, Subcommand};
+use clap::{Parser, Subcommand};
+
+pub mod commands;
+use commands::{Connection, Credentials};
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -15,14 +18,8 @@ enum Input {
     Login(Credentials),
     // Logout
     Logout,
-}
-
-#[derive(Args)]
-struct Credentials {
-    #[arg(short, long)]
-    username: String,
-    #[arg(short, long)]
-    password: String,
+    // Server
+    Connect(Connection),
 }
 
 fn main() {
@@ -36,6 +33,7 @@ fn main() {
             )
         }
         Some(Input::Logout) => println!("Logout."),
+        Some(Input::Connect(_connection)) => println!("Connect."),
         None => println!("No argument provided."),
     }
 }
