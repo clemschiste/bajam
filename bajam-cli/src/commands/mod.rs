@@ -114,7 +114,7 @@ pub async fn get_auth_cookie(credentials: &Credentials) -> Result<String, CliErr
     body_json.insert("username", credentials.username.clone());
     body_json.insert("password", credentials.password.clone());
     let body = client
-        .post(format!("{}:{}/user/login", connection.adress, connection.port))
+        .post(format!("http://{}:{}/user/login", connection.adress, connection.port))
         .json(&body_json)
         .send()
         .await?;
@@ -130,7 +130,7 @@ pub async fn register_request(client: Client, credentials: &Credentials) -> Resu
     body_json.insert("username", credentials.username.clone());
     body_json.insert("password", credentials.password.clone());
     let body = client
-        .post(format!("{}:{}/user/new", connection.adress, connection.port))
+        .post(format!("http://{}:{}/user/new", connection.adress, connection.port))
         .json(&body_json)
         .send()
         .await?;
