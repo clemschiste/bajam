@@ -21,10 +21,6 @@ async fn main() -> anyhow::Result<()> {
     dotenv().ok(); // Reads the .env file
     let config = get_config_from_args()?;
     let database_path = env::var("DATABASE_PATH")?;
-
-    println!("Current dir: {:?}", std::env::current_dir()?);
-    println!("Database PATH: {}", database_path);
-    
     let db = db_connect(&database_path).await?;
 
     // Loads database + history

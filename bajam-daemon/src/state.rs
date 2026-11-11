@@ -14,7 +14,7 @@ impl AppState {
         // Le problème quand tu relance le server, il intègre la "current pos" dans l'history
         print!("Loading history... ");
 
-        // OFFSET 1 car on ne veut pas intégrer la current à l'history
+        // OFFSET 1 car on ne veut pas intégrer le plus récent current à l'history
         let history = sqlx::query_as!(
             Heartbeat,
             r#"
@@ -37,23 +37,31 @@ impl AppState {
     }
 }
 
-use std::fs::OpenOptions;
+use std::{fs::OpenOptions, path::Path};
 
 pub async fn db_connect(path: &str) -> Result<Pool<Sqlite>, sqlx::Error> {
-    print!("Attempting to create db file in {}... ", path);
+    // Check if path exists
+    let db_exists = Path::new(path).try_exists()?;
 
-    OpenOptions::new()
-        .create(true)
-        .truncate(false)
-        .write(true)
-        .open(path)
-        .map_err(sqlx::Error::Io)?;
+    // If it does not exists, create it
+    if !db_exists {
+        print!("Creating a new database in {}... ", path);
 
-    println!("Success.");
+        OpenOptions::new()
+            .create(true)
+            .truncate(false)
+            .write(true)
+            .open(path)
+            .map_err(sqlx::Error::Io)?;
+    } else {
+        println!("Using existing database in {}.", path);
+    }
+
     let database_url = format!("sqlite://{}", path);
 
     print!("Connecting to db at {}... ", database_url);
-    
+
+    // this piece of code is also common to bin/setup.rs file
     let db = SqlitePoolOptions::new()
         .max_connections(3)
         .connect(&database_url)

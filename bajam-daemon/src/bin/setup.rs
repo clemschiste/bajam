@@ -41,4 +41,4 @@ async fn db_connect(path: &str) -> Result<Pool<Sqlite>, sqlx::Error> {
 
 // Embeds migrations into the compiled binary
 // Empty -> default to "./migrations"
-static MIGRATOR: Migrator = sqlx::migrate!("../migrations");
+static MIGRATOR: Migrator = sqlx::migrate!("./migrations");
