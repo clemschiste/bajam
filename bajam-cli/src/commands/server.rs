@@ -6,6 +6,7 @@ pub async fn set_server(connection: Connection) -> Result<(), CliError> {
         token: None,
     };
     create_session_config(&config)?;
+    println!("Server setting adjusted in config.toml.");
 
     Ok(())
 }

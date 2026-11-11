@@ -1,4 +1,4 @@
-use reqwest::Client;
+use reqwest::{Client};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fs};
 use clap::{Args};
@@ -15,6 +15,7 @@ pub enum CliError {
     Reqwest(reqwest::Error),
     SerdeJson(serde_json::Error),
     MissingConfig,
+    UncompleteConfig,
     HttpError(reqwest::StatusCode, String),
     Auth(String),
 }
@@ -30,6 +31,10 @@ impl std::fmt::Display for CliError {
             CliError::MissingConfig => write!(
                 f,
                 "Aucun serveur configuré. Utilisez `bajam server --adresse <ADDR> --port <PORT>` d'abord."
+            ),
+            CliError::UncompleteConfig => write!(
+                f,
+                "Server configured but no user currently logged in."
             ),
             CliError::HttpError(status, body) => write!(f, "Erreur HTTP {status}: {body}"),
             CliError::Auth(msg) => write!(f, "Erreur d'authentification: {msg}"),
@@ -106,7 +111,7 @@ pub fn load_session_config() -> Result<Config, CliError> {
     Ok(config)
 }
 
-pub async fn get_auth_cookie(credentials: &Credentials) -> Result<String, CliError> {
+pub async fn get_auth_token(credentials: &Credentials) -> Result<String, CliError> {
     let connection = load_session_config()?.connection;
     
     let client = reqwest::Client::new();
@@ -121,6 +126,23 @@ pub async fn get_auth_cookie(credentials: &Credentials) -> Result<String, CliErr
 
     let login_response: LoginResponse = serde_json::from_str(body.text().await?.as_str())?;
     Ok(login_response.token)
+}
+
+// Logout will simply be a clearance of the token value (still valid for other sessions)
+pub async fn logout() -> Result<(), CliError> {
+        let config = load_session_config()?;
+
+       // Set token value to None as it is now to valid anymore
+        let new_config = Config {
+            connection: config.connection,
+            token: None,
+        };
+        create_session_config(&new_config)?;
+
+        println!("Successfully logged out.");
+
+        Ok(())
+        
 }
 
 pub async fn register_request(client: Client, credentials: &Credentials) -> Result<(), CliError> {

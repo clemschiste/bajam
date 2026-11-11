@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 pub mod commands;
 use commands::{Connection, Credentials};
 
-use crate::commands::{register::register_and_login, server::set_server};
+use crate::commands::{logout, register::{login, register_and_login}, server::set_server};
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -21,8 +21,12 @@ enum Input {
     Login(Credentials),
     // Logout
     Logout,
-    // Server
-    Connect(Connection),
+    // Show config status
+    Status,
+    // Create escapade
+    Escapade,
+    // Post
+    Post,
 }
 
 #[tokio::main]
@@ -31,15 +35,10 @@ async fn main() -> anyhow::Result<()> {
     match cli.command {
         Some(Input::Server(connection)) => set_server(connection).await?,
         Some(Input::Register(credentials)) => register_and_login(&credentials).await?,
-        Some(Input::Login(credentials)) => {
-            println!(
-                "Logged in, always nice to see you {}.",
-                credentials.username
-            )
-        }
-        Some(Input::Logout) => println!("Logout."),
-        Some(Input::Connect(_connection)) => println!("Connect."),
+        Some(Input::Login(credentials)) => login(&credentials).await?,
+        Some(Input::Logout) => logout().await?,
         None => println!("No argument provided."),
+        _ => panic!()
     }
 
     Ok(())
