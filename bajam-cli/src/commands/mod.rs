@@ -90,10 +90,16 @@ pub struct Connection {
     pub port: u16,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CurrentUser {
+    username: String,
+    token: String,
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Config {
-    pub connection: Connection,
-    pub token: Option<String>,
+    pub server_info: Connection,
+    pub connected_user: Option<CurrentUser>,
 }
 
 // Create the config file if it does not exists. Must first get login response from server.
@@ -112,7 +118,7 @@ pub fn load_session_config() -> Result<Config, CliError> {
 }
 
 pub async fn get_auth_token(credentials: &Credentials) -> Result<String, CliError> {
-    let connection = load_session_config()?.connection;
+    let connection = load_session_config()?.server_info;
     
     let client = reqwest::Client::new();
     let mut body_json = HashMap::new();
@@ -134,8 +140,8 @@ pub async fn logout() -> Result<(), CliError> {
 
        // Set token value to None as it is now to valid anymore
         let new_config = Config {
-            connection: config.connection,
-            token: None,
+            server_info: config.server_info,
+            connected_user: None,
         };
         create_session_config(&new_config)?;
 
@@ -145,8 +151,24 @@ pub async fn logout() -> Result<(), CliError> {
         
 }
 
+// Status reads the config file and display server and user status
+pub async fn status() -> Result<(), CliError> {
+        let config = load_session_config()?;
+        let current_user = match config.connected_user {
+            Some(user) => user.username,
+            None => "None".to_string(),
+        };
+        println!("User: {}.\nServer: http://{}:{}.",
+            current_user,
+            config.server_info.adress,
+            config.server_info.port);
+
+        Ok(())
+        
+}
+
 pub async fn register_request(client: Client, credentials: &Credentials) -> Result<(), CliError> {
-    let connection = load_session_config()?.connection;
+    let connection = load_session_config()?.server_info;
 
     let mut body_json = HashMap::new();
     body_json.insert("username", credentials.username.clone());

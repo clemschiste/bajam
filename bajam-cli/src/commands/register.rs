@@ -1,4 +1,4 @@
-use crate::commands::{Credentials, create_session_config, get_auth_token, load_session_config, register_request, CliError};
+use crate::commands::{Credentials, create_session_config, get_auth_token, load_session_config, register_request, CliError, CurrentUser};
 
 /// based on credentials create a new user (post on user/new) and refresh config to be logged in directly
 pub async fn register_and_login(credentials: &Credentials) -> Result<(), CliError> {
@@ -9,7 +9,11 @@ pub async fn register_and_login(credentials: &Credentials) -> Result<(), CliErro
     let token = get_auth_token(credentials).await?;
 
     let mut config = load_session_config()?;
-    config.token = Some(token);
+    config.connected_user = Some(
+        CurrentUser {
+            username: credentials.username.clone(),
+            token
+        });
     println!("Welcome, {} !", credentials.username);
     
     create_session_config(&config)?;
@@ -24,7 +28,12 @@ pub async fn login(credentials: &Credentials) -> Result<(), CliError> {
     let token = get_auth_token(credentials).await?;
     let mut config = load_session_config()?;
 
-    config.token = Some(token);
+    config.connected_user = Some(
+        CurrentUser {
+            username: credentials.username.clone(),
+            token,
+        }
+    );
     println!("You are now logged in, {} !", credentials.username);
     
     create_session_config(&config)?;

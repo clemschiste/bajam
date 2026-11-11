@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 pub mod commands;
 use commands::{Connection, Credentials};
 
-use crate::commands::{logout, register::{login, register_and_login}, server::set_server};
+use crate::commands::{logout, register::{login, register_and_login}, server::set_server, status};
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -37,6 +37,7 @@ async fn main() -> anyhow::Result<()> {
         Some(Input::Register(credentials)) => register_and_login(&credentials).await?,
         Some(Input::Login(credentials)) => login(&credentials).await?,
         Some(Input::Logout) => logout().await?,
+        Some(Input::Status) => status().await?,
         None => println!("No argument provided."),
         _ => panic!()
     }
