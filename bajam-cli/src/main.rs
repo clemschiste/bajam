@@ -26,7 +26,7 @@ enum Input {
     // Create escapade
     Escapade,
     // Post
-    Post,
+    Heartbeat,
 }
 
 #[tokio::main]

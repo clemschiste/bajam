@@ -4,16 +4,24 @@ use axum::http::{StatusCode};
 use uuid::Uuid;
 use sha2::{Sha256, Digest};
 use chrono::{Duration, Utc};
+use serde::{Deserialize, Serialize};
+
+use crate::routes::user_register::UserPost;
 use crate::state::AppState;
-use crate::models::user::{User, LoginUser};
-use crate::models::session::LoginResponse;
+
+use bajam_common::models::user::User;
+
+#[derive(Serialize, Deserialize)]
+pub struct LoginResponse {
+    pub token: String,
+}
 
 // Here we want to check if the username/passord input is valid
 // Then handle a UUid token that we sha256 hash in the db
 
 pub async fn login(
     State(state): State<AppState>,
-    Json(payload): Json<LoginUser>
+    Json(payload): Json<UserPost>
 ) -> Result<Json<LoginResponse>, (StatusCode, String)> {
 
     // Get user info and check credentials

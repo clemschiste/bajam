@@ -66,11 +66,12 @@ Instead of using Polarstep, you run your own minimal pipeline:
 git clone <repo-url>
 cd bajam
 
-# 1. Create the SQLite database and a .env file with predefined values
-cargo run -p setup
+# 1. Create the SQLite database and a .env file with predefined values (you can pass --"your_db_name" as an option)
+# From the root directory
+cargo run -p bajam-daemon --bin setup
 
 # 2. Launch the server
-# By default binds to TCP_LOCAL. Use --tailnet to bind to TCP_TAILNET instead.
+# By default binds to TCP_LOCAL. Use --tailnet to bind to TCP_TAILNET instead (make sure to edit the .env file with the correct tailnet value)
 cargo run -- --tailnet
 ```
 

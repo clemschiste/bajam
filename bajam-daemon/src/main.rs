@@ -2,7 +2,6 @@ use dotenv::dotenv;
 use std::env;
 
 mod routes;
-mod models;
 mod middleware;
 mod config;
 mod state;

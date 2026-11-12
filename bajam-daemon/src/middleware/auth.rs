@@ -4,7 +4,7 @@ use axum::{middleware::Next, response::Response};
 use axum::extract::{State, Request};
 use axum_extra::extract::CookieJar;
 use sha2::{Sha256, Digest};
-use crate::models::session::Session;
+use bajam_common::models::session::Session;
 use crate::state::AppState;
 use crate::db::session_queries::sql_delete_user_session;
 

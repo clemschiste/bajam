@@ -1,6 +1,6 @@
 use sqlx::{SqlitePool};
-use crate::models::heartbeat::Heartbeat;
 use sqlx::{Pool, Result, Sqlite, sqlite::SqlitePoolOptions, migrate::Migrator};
+use bajam_common::models::heartbeat::Heartbeat;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -18,7 +18,7 @@ impl AppState {
         let history = sqlx::query_as!(
             Heartbeat,
             r#"
-                SELECT latitude, longitude, timestamp, description, picture_id, user_id
+                SELECT latitude, longitude, timestamp, description, picture_id, user_id, escapade_id
                 FROM heartbeats
                 ORDER BY timestamp DESC
                 LIMIT 100 OFFSET 1

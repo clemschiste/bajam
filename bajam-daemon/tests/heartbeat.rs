@@ -1,13 +1,9 @@
-use axum::{
-    Router, body::{Body, to_bytes}, http::{Request, Response},
-};
-use axum::http::StatusCode;
-
-mod common;
-use bajam_daemon::routes::{escapade_post::EscapadeResponse, heartbeat_post::ImageHandle};
-use common::*;
+use axum::{Router, body::{Body, to_bytes}, http::{Request, Response, StatusCode}};
 use tower::ServiceExt;
 use uuid::Uuid;
+mod common;
+use common::*;
+use bajam_daemon::routes::{escapade_post::EscapadeResponse, heartbeat_post::ImageHandle};
 
 #[tokio::test]
 // Scenario post an heartbeat

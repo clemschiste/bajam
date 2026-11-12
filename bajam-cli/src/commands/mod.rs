@@ -6,6 +6,7 @@ use reqwest::StatusCode;
 
 pub mod register;
 pub mod server;
+pub mod post;
 
 #[derive(Debug)]
 pub enum CliError {

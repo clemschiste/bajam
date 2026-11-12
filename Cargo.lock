@@ -349,12 +349,21 @@ name = "bajam-cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bajam-common",
  "clap",
  "reqwest",
  "serde",
  "serde_json",
  "tokio",
  "toml",
+]
+
+[[package]]
+name = "bajam-common"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
 ]
 
 [[package]]
@@ -365,6 +374,7 @@ dependencies = [
  "askama",
  "axum",
  "axum-extra",
+ "bajam-common",
  "bcrypt",
  "chrono",
  "clap",

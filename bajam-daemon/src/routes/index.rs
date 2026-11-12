@@ -3,9 +3,10 @@ use axum::response::Html;
 use axum::extract::State;
 use axum::http::StatusCode;
 use chrono::NaiveDateTime;
-
-use crate::models::heartbeat::*;
+use serde::{Deserialize, Serialize};
 use crate::state::AppState;
+
+use bajam_common::models::heartbeat::Heartbeat;
 
 // Index is called on root_path and serves an updated Html<String>
 // based on the last heartbeat on the database
@@ -19,7 +20,7 @@ pub async fn index(
     let heartbeat = sqlx::query_as!(
         Heartbeat,
         r#"
-            SELECT latitude, longitude, timestamp, description, picture_id, user_id
+            SELECT latitude, longitude, timestamp, description, picture_id, user_id, escapade_id
             FROM heartbeats
             ORDER BY timestamp DESC
             LIMIT 1
@@ -87,4 +88,15 @@ struct IndexTemplate {
     description: String,
     picture_id: String,
     history_json: String,
+}
+
+// Heartbeat response. Inclut un historique des positions
+#[derive(Serialize, Deserialize, Debug)]
+pub struct HeartbeatResponse {
+    pub latitude: f64,
+    pub longitude: f64,
+    pub timestamp: NaiveDateTime,
+    pub description: Option<String>,
+    pub picture_id: String,
+    pub history: Vec<Heartbeat>, // Pour map libre js -> [longitude, latitude]
 }

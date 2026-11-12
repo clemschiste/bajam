@@ -1,12 +1,12 @@
 use axum::{Json, extract::State};
 use axum::http::{StatusCode};
+use serde::Deserialize;
 use crate::state::AppState;
-use crate::models::user::{RegisterPost};
 
 // Function to create a user in the database with hashed_password based on post
 pub async fn register(
     State(state): State<AppState>,
-    Json(payload): Json<RegisterPost>
+    Json(payload): Json<UserPost>
 ) -> Result<StatusCode, (StatusCode, String)> {
 
     println!("User registation request received");
@@ -31,4 +31,10 @@ pub async fn register(
 
     Ok(StatusCode::NO_CONTENT)
         
+}
+
+#[derive(Deserialize, Debug)]
+pub struct UserPost {
+    pub username: String,
+    pub password: String,
 }

@@ -6,25 +6,26 @@ use sqlx::{
     SqlitePool,
 };
 use tower::ServiceExt;
-use bajam_daemon::{models::session::LoginResponse};
-use bajam_daemon::state::AppState;
+use bajam_daemon::{routes::user_login::LoginResponse, state::AppState};
 use bajam_daemon::routes::router::create_router;
 
-#[allow(dead_code)]
-pub struct Session {
+// Unused for some reason but used in test/heartbeat.rs ?
+#[allow(unused)]
+pub struct TestSession {
     pub token: String,
     pub router: Router,
 }
 
-#[allow(dead_code)]
-pub async fn test_init_with_user(username: &str, password: &str) -> Session {
+// Unused for some reason but used in test/heartbeat.rs ?
+#[allow(unused)]
+pub async fn test_init_with_user(username: &str, password: &str) -> TestSession {
     let db = test_db().await;
     let test_state = AppState::new(db).await;
     let test_router = create_router(test_state.unwrap());
     test_register_user(username, password, test_router.clone()).await;
     let response = test_login_user(username, password, test_router.clone()).await;
 
-    Session {
+    TestSession {
         token : test_extract_token_on_login(response).await,
         router: test_router 
     }
