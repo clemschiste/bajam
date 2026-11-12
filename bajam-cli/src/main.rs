@@ -1,9 +1,14 @@
 use clap::{Parser, Subcommand};
-
-pub mod commands;
 use commands::{Connection, Credentials};
 
-use crate::commands::{logout, register::{login, register_and_login}, server::set_server, status};
+use crate::commands::server::set_server;
+use crate::commands::register::*;
+use crate::commands::login::*;
+use crate::commands::logout::*;
+use crate::commands::status::*;
+
+mod commands;
+mod errors;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -34,7 +39,7 @@ async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Some(Input::Server(connection)) => set_server(connection).await?,
-        Some(Input::Register(credentials)) => register_and_login(&credentials).await?,
+        Some(Input::Register(credentials)) => register(&credentials).await?,
         Some(Input::Login(credentials)) => login(&credentials).await?,
         Some(Input::Logout) => logout().await?,
         Some(Input::Status) => status().await?,

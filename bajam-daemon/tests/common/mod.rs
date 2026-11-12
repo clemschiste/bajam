@@ -6,8 +6,9 @@ use sqlx::{
     SqlitePool,
 };
 use tower::ServiceExt;
-use bajam_daemon::{routes::user_login::LoginResponse, state::AppState};
+use bajam_daemon::state::AppState;
 use bajam_daemon::routes::router::create_router;
+use bajam_common::models::session::LoginResponse;
 
 // Unused for some reason but used in test/heartbeat.rs ?
 #[allow(unused)]
