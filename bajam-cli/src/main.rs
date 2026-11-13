@@ -6,6 +6,7 @@ use crate::commands::register::*;
 use crate::commands::login::*;
 use crate::commands::logout::*;
 use crate::commands::status::*;
+use crate::commands::escapades::*;
 
 mod commands;
 mod errors;
@@ -29,9 +30,27 @@ enum Input {
     // Show config status
     Status,
     // Create escapade
-    Escapade,
+    Escapade {
+        #[command(subcommand)]
+        command: SubEscapades,
+    },
     // Post
     Heartbeat,
+}
+
+#[derive(Subcommand)]
+enum SubEscapades {
+    // List available escapades
+    List,
+    // Create an escapade (you will be admin)
+    Create(EscapadeArgs),
+    // Delete an escapade (you must be admin of the escapade)
+    Delete,
+}
+
+#[derive(clap::Args)]
+pub struct EscapadeArgs {
+    pub name: String,
 }
 
 #[tokio::main]
@@ -43,6 +62,13 @@ async fn main() -> anyhow::Result<()> {
         Some(Input::Login(credentials)) => login(&credentials).await?,
         Some(Input::Logout) => logout().await?,
         Some(Input::Status) => status().await?,
+        Some(Input::Escapade{ command: action }) => {
+            match action {
+                SubEscapades::List => list_escapades().await?,
+                SubEscapades::Create(escapade) => (create_escapade(escapade.name)).await?,
+                SubEscapades::Delete => (),
+            }
+        },
         None => println!("No argument provided."),
         _ => panic!()
     }

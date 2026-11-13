@@ -1,6 +1,7 @@
 use crate::middleware::auth::*;
 use crate::middleware::logger::*;
 use crate::routes::escapade_delete::*;
+use crate::routes::escapade_list::*;
 use crate::routes::escapade_post::*;
 use crate::routes::heartbeat_delete::*;
 use crate::routes::heartbeat_post::*;
@@ -25,6 +26,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/escapades/{escapade_id}/heartbeat", post(heartbeat_post)) // Create a new heartbeat
         .route("/heartbeats/{heartbeat_id}", delete(heartbeat_delete)) // Delete a heartbeat
         .route("/escapades", post(escapade_post)) // Create (and join) a new escapade
+        .route("/escapades", get(escapades_list)) // list all escapades of the user
         .route("/escapades/{escapade_id}", delete(escapade_delete)) // Delete an escapade (with cascade)
         .route("/upload/{picture_id}", post(post_picture)) // Upload in conjuction with a hb
         .route("/user/logout", delete(session_logout))

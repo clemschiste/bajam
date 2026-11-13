@@ -1,5 +1,5 @@
 use crate::{commands::Credentials, errors::CliError};
-use crate::commands::{get_auth_token, load_session_config, create_session_config};
+use crate::commands::{get_auth_token, load_session_config, create_session_config_with_user};
 use crate::commands::CurrentUser;
 
 // login récupère le auth cookie du serveur et le remplace par l'existant du fichier config
@@ -16,7 +16,7 @@ pub async fn login(credentials: &Credentials) -> Result<(), CliError> {
     );
     println!("You are now logged in, {} !", credentials.username);
     
-    create_session_config(config)?;
+    create_session_config_with_user(config)?;
     println!("Session configured");
 
     Ok(())

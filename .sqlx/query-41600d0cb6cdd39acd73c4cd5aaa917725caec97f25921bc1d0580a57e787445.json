@@ -1,0 +1,98 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT latitude, longitude, timestamp, description, picture_id, user_id, escapade_id\n                FROM heartbeats\n                ORDER BY timestamp DESC\n                LIMIT 100 OFFSET 1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "latitude",
+        "ordinal": 0,
+        "type_info": "Float",
+        "origin": {
+          "Table": {
+            "table": "heartbeats",
+            "name": "latitude"
+          }
+        }
+      },
+      {
+        "name": "longitude",
+        "ordinal": 1,
+        "type_info": "Float",
+        "origin": {
+          "Table": {
+            "table": "heartbeats",
+            "name": "longitude"
+          }
+        }
+      },
+      {
+        "name": "timestamp",
+        "ordinal": 2,
+        "type_info": "Datetime",
+        "origin": {
+          "Table": {
+            "table": "heartbeats",
+            "name": "timestamp"
+          }
+        }
+      },
+      {
+        "name": "description",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "heartbeats",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "name": "picture_id",
+        "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "heartbeats",
+            "name": "picture_id"
+          }
+        }
+      },
+      {
+        "name": "user_id",
+        "ordinal": 5,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "heartbeats",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "name": "escapade_id",
+        "ordinal": 6,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "heartbeats",
+            "name": "escapade_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "41600d0cb6cdd39acd73c4cd5aaa917725caec97f25921bc1d0580a57e787445"
+}

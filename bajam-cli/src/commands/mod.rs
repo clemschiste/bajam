@@ -12,6 +12,7 @@ pub mod post;
 pub mod logout;
 pub mod status;
 pub mod login;
+pub mod escapades;
 
 #[derive(Args, Clone)]
 pub struct Credentials {
@@ -43,17 +44,24 @@ pub struct Config {
 
 impl Config {
     /// Check if it is valid for authentication attempt (connected user is defined)
-    pub fn with_user(&self) -> bool {
+    pub fn has_user(&self) -> bool {
         self.connected_user.is_some()
     }
 }
 
 // Create the config file if it does not exists. Config must be valid (including token).
-pub fn create_session_config(config: Config) -> Result<(), CliError> {
-    if !&config.with_user() {
+pub fn create_session_config_with_user(config: Config) -> Result<(), CliError> {
+    if !&config.has_user() {
         return Err(CliError::UncompleteConfig);
     }
 
+    let toml = toml::to_string_pretty(&config)?;
+    fs::write("config.toml", toml)?;
+    Ok(())
+}
+
+// Create the config file if it does not exists. User might be set to None here.
+pub fn create_session_config(config: Config) -> Result<(), CliError> {
     let toml = toml::to_string_pretty(&config)?;
     fs::write("config.toml", toml)?;
     Ok(())

@@ -1,4 +1,5 @@
 use axum::http::StatusCode;
+use bajam_common::models::escapade::Escapade;
 
 use crate::state::AppState;
 
@@ -33,4 +34,30 @@ pub async fn sql_delete_escapade(state: &AppState, user_id: &i64, escapade_id: &
     }
 
   Ok(())
+}
+
+/// List escapades the user is a member of
+pub async fn sql_list_escapades(state: &AppState, user_id: &i64) -> Result<Vec<Escapade>, (StatusCode, String)> {
+
+  let result = sqlx::query_as!(
+    Escapade,
+    r#"
+        SELECT name, id
+        FROM escapades
+        INNER JOIN escapades_map
+          ON escapades.id = escapades_map.escapade_id
+        WHERE escapades_map.user_id = ?
+        LIMIT 100
+    "#,
+    user_id
+  )
+  .fetch_all(&state.db)
+    .await
+    .map_err(|e| {
+        eprintln!("Database error {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, format!("Database error : {e}"))
+    })?;
+
+    Ok(result)
+
 }
