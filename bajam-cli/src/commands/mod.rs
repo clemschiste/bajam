@@ -8,7 +8,7 @@ use crate::errors::CliError;
 
 pub mod register;
 pub mod server;
-pub mod post;
+pub mod heartbeat;
 pub mod logout;
 pub mod status;
 pub mod login;

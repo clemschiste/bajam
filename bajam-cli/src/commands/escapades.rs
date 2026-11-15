@@ -51,15 +51,13 @@ pub async fn list_escapades() -> Result<(), CliError> {
           .send()
           .await?;
 
-      dbg!(&response);
-
       match response.status() {
         StatusCode::NOT_FOUND => println!("No escapade found for {} in {}:{}.", user.username, config.server_info.adress, config.server_info.port),
         StatusCode::OK => {
           let list: Vec<Escapade> = response.json().await?;
           println!("Available escapades:");
           for esc in list {
-            println!("{}", esc.name);
+            println!("{} (#{})", esc.name, esc.id);
           }
         },
         _ => eprintln!("Error in decoding response, {}", response.status()),
@@ -70,4 +68,3 @@ pub async fn list_escapades() -> Result<(), CliError> {
 
     Ok(())
 }
-

@@ -1,14 +1,9 @@
-use serde::{Deserialize, Serialize, Deserializer};
 use axum::{Extension, Json, extract::{State, Path}};
 use axum::http::StatusCode;
 use sqlx::Result;
-use crate::state::AppState;
 use uuid::Uuid;
-
-#[derive(Serialize, Deserialize)]
-pub struct ImageHandle {
-    pub picture_id: Uuid,
-}
+use crate::state::AppState;
+use bajam_common::models::heartbeat::{HeartbeatPost, ImageHandle};
 
 pub async fn heartbeat_post(
     State(state): State<AppState>,
@@ -16,6 +11,10 @@ pub async fn heartbeat_post(
     Extension(user_id): Extension<i64>, // User id obtenu avec le auth middleware
     Json(payload): Json<HeartbeatPost>,
 ) -> Result<Json<ImageHandle>, (StatusCode, String)> {
+
+    if !payload.valid() {
+        return Err((StatusCode::UNPROCESSABLE_ENTITY, "Invalid range".to_string()))
+    }
 
     let picture_id = Uuid::new_v4();
 
@@ -60,35 +59,3 @@ pub async fn heartbeat_post(
       )
     )
 }
-
-// Post struct (timestamp created at INSERTION)
-// Iphone inable to send floats in the json position...
-#[derive(Serialize, Deserialize, Debug)]
-pub struct HeartbeatPost {
-    #[serde(deserialize_with = "string_or_float")]
-    latitude: f64,
-    #[serde(deserialize_with = "string_or_float")]
-    longitude: f64,
-    description: Option<String>,
-}
-
-fn string_or_float<'de, D>(deserializer: D) -> Result<f64, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum StringOrFloat {
-        Float(f64),
-        String(String),
-    }
-
-    match StringOrFloat::deserialize(deserializer)? {
-        StringOrFloat::Float(value) => Ok(value),
-        StringOrFloat::String(value) => value
-            .parse::<f64>()
-            .map_err(serde::de::Error::custom),
-    }
-}
- 
-

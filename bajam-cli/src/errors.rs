@@ -6,7 +6,9 @@ pub enum CliError {
     Reqwest(reqwest::Error),
     SerdeJson(serde_json::Error),
     MissingConfig(String),
+    InvalidInput(String),
     UncompleteConfig,
+    Missmatch(String),
     HttpError(reqwest::StatusCode, String),
     Auth(String),
 }
@@ -30,6 +32,8 @@ impl std::fmt::Display for CliError {
                 "Server config not definied. Try 'server' command first. {e}",
             ),
             CliError::UncompleteConfig => write!(f, "You must be logged in first."),
+            CliError::Missmatch(e) => write!(f, "{e}"),
+            CliError::InvalidInput(e) => write!(f, "{e}"),
             CliError::HttpError(status, body) => write!(f, "Erreur HTTP {status}: {body}"),
             CliError::Auth(msg) => write!(f, "Erreur d'authentification: {msg}"),
         }
