@@ -21,4 +21,3 @@ pub async fn login(credentials: &Credentials) -> Result<(), CliError> {
 
     Ok(())
 }
-

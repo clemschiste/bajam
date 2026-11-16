@@ -57,7 +57,7 @@ pub async fn test_login_user(username: &str, password: &str, router: Router) -> 
     });
 
     router.oneshot(
-        Request::post("/user/login")
+        Request::post("/api/login")
         .header("Content-type", "application/json")
         .body(Body::from(login_body.to_string()))
         .unwrap(),

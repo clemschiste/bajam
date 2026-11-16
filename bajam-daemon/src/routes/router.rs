@@ -1,11 +1,11 @@
 use crate::middleware::auth::*;
 use crate::middleware::logger::*;
+use crate::routes::dashboard::*;
 use crate::routes::escapade_delete::*;
 use crate::routes::escapade_list::*;
 use crate::routes::escapade_post::*;
 use crate::routes::heartbeat_delete::*;
 use crate::routes::heartbeat_post::*;
-use crate::routes::index::*;
 use crate::routes::upload::*;
 use crate::routes::user_login::*;
 use crate::routes::user_logout::*;
@@ -30,13 +30,16 @@ pub fn create_router(state: AppState) -> Router {
         .route("/escapades/{escapade_id}", delete(escapade_delete)) // Delete an escapade (with cascade)
         .route("/upload/{picture_id}", post(post_picture)) // Upload in conjuction with a hb
         .route("/user/logout", delete(session_logout))
+        .route("/dashboard", get(dashboard_view)) // Display the dashboard.html template (last heartbeat loaded)
         .layer(from_fn_with_state(state.clone(), auth)); // auth middleware
 
     // Full router
     Router::new()
         .route("/user/new", post(register)) // Create a new user
-        .route("/user/login", post(login)) // Verif + token to user
-        .route("/", get(index)) // Display the index.html template (last heartbeat loaded)
+        .route("/api/login", post(login_api)) // login via json
+        .route("/login", post(login_web)) // login via form
+        .route("/login", get(login_view)) // Verif + token to user
+        .route("/", get(dashboard_view)) // Display the dashboard.html template (last heartbeat loaded)
         .route("/image/{picture_id}", get(get_picture))
         .merge(protected_routes)
         .nest_service("/static", ServeDir::new("static"))

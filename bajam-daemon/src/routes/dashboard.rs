@@ -1,19 +1,22 @@
 use askama::Template;
-use axum::response::Html;
+use axum::{Extension, response::Html};
 use axum::extract::State;
 use axum::http::StatusCode;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+use crate::db::user_queries::sql_username_from_id;
 use crate::state::AppState;
 
 use bajam_common::models::heartbeat::Heartbeat;
 
 // Index is called on root_path and serves an updated Html<String>
 // based on the last heartbeat on the database
-pub async fn index(
+pub async fn dashboard_view(
     State(state): State<AppState>,
+    Extension(user_id): Extension<i64>
 ) -> Result<Html<String>, (StatusCode, String)> {
     println!("Index request received");
+    let username = sql_username_from_id(&state, &user_id).await?;
 
     // Database query, guetting the last timestamped row
     // If empty return an empty row error.
@@ -66,6 +69,7 @@ pub async fn index(
         description: response.description.clone().unwrap_or_default(),
         picture_id: response.picture_id.clone(),
         history_json,
+        username
     };
 
     let html = template.render().map_err(|e| {
@@ -80,7 +84,7 @@ pub async fn index(
 }
 
 #[derive(Template)] // this will generate the code...
-#[template(path = "index.html")]
+#[template(path = "dashboard.html")]
 struct IndexTemplate {
     latitude: f64,
     longitude: f64,
@@ -88,6 +92,7 @@ struct IndexTemplate {
     description: String,
     picture_id: String,
     history_json: String,
+    username: String,
 }
 
 // Heartbeat response. Inclut un historique des positions

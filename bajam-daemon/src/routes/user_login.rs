@@ -1,10 +1,16 @@
+use askama::Template;
+use axum::Form;
+use axum::body::Body;
+use axum::http::header::SET_COOKIE;
+use axum::response::{Html, IntoResponse, Redirect};
+use axum_extra::extract::cookie::{Cookie, SameSite};
 use bcrypt::verify;
 use axum::{Json, extract::State};
-use axum::http::{StatusCode};
+use axum::http::{Response, StatusCode};
 use uuid::Uuid;
 use sha2::{Sha256, Digest};
 use chrono::{Duration, Utc};
-use bajam_common::models::session::LoginResponse;
+use bajam_common::models::session::{LoginResponse};
 
 use crate::routes::user_register::UserPost;
 use crate::state::AppState;
@@ -14,17 +20,52 @@ use bajam_common::models::user::User;
 // Here we want to check if the username/passord input is valid
 // Then handle a UUid token that we sha256 hash in the db
 
-pub async fn login(
+pub async fn login_web(
+    State(state): State<AppState>,
+    Form(payload): Form<UserPost>
+) -> Result<Response<Body>, (StatusCode, String)> {
+
+    let token = authenticate(&state, payload.username, payload.password).await?;
+    
+    let cookie = Cookie::build(("session_id", token))
+        .http_only(true)
+        // .secure(true)
+        .same_site(SameSite::Lax)
+        .path("/")
+        .build();
+
+    let mut response = Redirect::to("/dashboard").into_response();
+
+    response.headers_mut().insert(
+        SET_COOKIE,
+        cookie.to_string()
+            .parse()
+            .map_err(|e| (StatusCode::UNAUTHORIZED, format!("{e}")))?);
+
+    Ok(response)
+}
+
+pub async fn login_api(
     State(state): State<AppState>,
     Json(payload): Json<UserPost>
 ) -> Result<Json<LoginResponse>, (StatusCode, String)> {
 
-    // Get user info and check credentials
+    let token = authenticate(&state, payload.username, payload.password).await?;
+    
+    Ok(
+        Json(
+            LoginResponse { token }
+        )
+    )
+}
 
+type Token = String;
+
+async fn authenticate(state: &AppState, username: String, password: String) -> Result<Token, (StatusCode, String)> {
     let user_opt = sqlx::query_as!(
         User,
         "SELECT * FROM users WHERE username = $1",
-        payload.username,
+        username,
     )
     .fetch_optional(&state.db)
     .await
@@ -35,7 +76,7 @@ pub async fn login(
         None => return Err((StatusCode::UNAUTHORIZED, "Invalid credentials".to_string()))
     };
 
-    let valid = verify(&payload.password, &user.password_hash)
+    let valid = verify(password, &user.password_hash)
         .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid credentials".to_string()))?;
 
     if !valid {
@@ -63,10 +104,21 @@ pub async fn login(
         eprintln!("Database error {}", e);
         (StatusCode::INTERNAL_SERVER_ERROR, format!("Database error : {e}"))
     })?;
-    
-    Ok(
-        Json(
-            LoginResponse { token }
-        )
-    )
+
+    Ok(token)
 }
+
+
+pub async fn login_view() -> Result<Html<String>, (StatusCode, String)> {
+    let template = LoginTemplate {};
+    let html = template.render().map_err(|e| {
+        (StatusCode::INTERNAL_SERVER_ERROR,
+        format!("Template error: {e}"))
+    })?;
+
+    Ok(Html(html))
+}
+
+#[derive(Template)] // this will generate the code...
+#[template(path = "login.html")]
+struct LoginTemplate {}
