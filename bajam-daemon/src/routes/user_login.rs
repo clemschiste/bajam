@@ -18,7 +18,6 @@ use bajam_common::models::user::User;
 
 // Here we want to check if the username/passord input is valid
 // Then handle a UUid token that we sha256 hash in the db
-
 pub async fn login_web(
     State(state): State<AppState>,
     Form(payload): Form<UserPost>

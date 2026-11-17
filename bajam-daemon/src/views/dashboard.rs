@@ -2,8 +2,10 @@ use askama::Template;
 use axum::{Extension, response::Html};
 use axum::extract::State;
 use axum::http::StatusCode;
+use bajam_common::models::escapade::Escapade;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+use crate::db::escapade_queries::sql_list_escapades;
 use crate::db::user_queries::sql_username_from_id;
 use crate::state::AppState;
 
@@ -60,6 +62,8 @@ pub async fn dashboard_view(
         }
      )?;
 
+     let escapades = sql_list_escapades(&state, &user_id).await?;
+
    // The askama template (aiming at templates/index.html) is constructed
    // with the last attributes fetched
     let template = DashboardTemplate {
@@ -69,7 +73,8 @@ pub async fn dashboard_view(
         description: response.description.clone().unwrap_or_default(),
         picture_id: response.picture_id.clone(),
         history_json,
-        username
+        username,
+        escapades
     };
 
     let html = template.render().map_err(|e| {
@@ -93,6 +98,7 @@ struct DashboardTemplate {
     picture_id: String,
     history_json: String,
     username: String,
+    escapades: Vec<Escapade>,
 }
 
 // Heartbeat response. Inclut un historique des positions

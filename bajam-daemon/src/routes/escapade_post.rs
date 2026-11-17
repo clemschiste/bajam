@@ -1,18 +1,70 @@
+use askama::Template;
+use axum::Form;
+use axum::response::Html;
 use axum::{http::StatusCode};
 use axum::{Extension, Json, extract::State};
+use bajam_common::models::escapade::Escapade;
 use sqlx::Result;
 use serde::{Deserialize, Serialize};
 
+use crate::db::escapade_queries::sql_list_escapades;
 use crate::state::AppState;
 
-pub async fn escapade_post(
+// Maybe add description later ?
+#[derive(Serialize, Deserialize, Debug)]
+pub struct EscapadePost {
+  name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct EscapadeResponse {
+  pub escapade_id: i64,
+}
+#[derive(Template)]
+#[template(path = "escapade_list.html")]
+pub struct EscapadesListTemplate {
+    pub escapades: Vec<Escapade>,
+}
+
+// For posting an escapade we create a transaction for the two tables escapades and escapade_map
+// We must insert the user_id + escapade_id in the second
+pub async fn escapade_post_api(
   State(state): State<AppState>,
   Extension(user_id): Extension<i64>,
   Json(payload): Json<EscapadePost>,
 ) -> Result<Json<EscapadeResponse>, (StatusCode, String)> {
-  
-    println!("Escapade creation request received");
 
+    let escapade_response = escapade_post_tx(&state, user_id, payload.name).await?;
+
+    Ok(Json(escapade_response))
+}
+
+pub async fn escapade_post_web(
+  State(state): State<AppState>,
+  Extension(user_id): Extension<i64>,
+  Form(payload): Form<EscapadePost>,
+) -> Result<Html<String>, (StatusCode, String)> {
+
+    escapade_post_tx(&state, user_id, payload.name).await?;
+    let escapade_list = sql_list_escapades(&state, &user_id).await?;
+
+    let template = EscapadesListTemplate { escapades: escapade_list };
+    let html = template.render().map_err(|e| {
+      (
+          StatusCode::INTERNAL_SERVER_ERROR,
+          format!("Template error: {e}"),
+      )
+    })?;
+    
+    Ok(Html(html))
+}
+
+
+async fn escapade_post_tx(
+    state: &AppState,
+    user_id: i64,
+    escapade_name: String
+) -> Result<EscapadeResponse, (StatusCode, String)> {
     // Début de transaction (avec begin)
     let mut tx = state.db.begin().await.map_err(|e| {
         eprintln!("Database error: {}", e);
@@ -27,7 +79,7 @@ pub async fn escapade_post(
             RETURNING id
         "#
     )
-    .bind(payload.name)
+    .bind(escapade_name)
     .fetch_one(&mut *tx)
     .await
     .map_err(|e| {
@@ -57,16 +109,6 @@ pub async fn escapade_post(
         (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
     })?;
 
-    Ok(Json(EscapadeResponse{escapade_id}))
-}
-
-// Maybe add description later ?
-#[derive(Serialize, Deserialize, Debug)]
-pub struct EscapadePost {
-  name: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct EscapadeResponse {
-  pub escapade_id: i64,
+    Ok(EscapadeResponse { escapade_id })
+    
 }

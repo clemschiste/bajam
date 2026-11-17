@@ -59,7 +59,7 @@ async fn test_post_heartbeat(token: String, router: Router, escapade_id: i64) ->
     });
 
     router.oneshot(
-        Request::post(format!("/escapades/{}/heartbeat", escapade_id))
+        Request::post(format!("/api/escapades/{}/heartbeat", escapade_id))
         .header("Authorization", format!("Bearer {}", token))
         .header("Content-Type", "application/json")
         .body(Body::from(heartbeat_body.to_string()))
@@ -76,7 +76,7 @@ async fn test_post_escapade(token: String, router: Router, name: &str) -> Respon
     });
 
     router.oneshot(
-        Request::post("/escapades")
+        Request::post("/api/escapades")
         .header("Authorization", format!("Bearer {}", token))
         .header("Content-Type", "application/json")
         .body(Body::from(escapade_body.to_string()))
@@ -95,7 +95,7 @@ pub async fn test_extract_escapade_id(escapade_response: Response<Body>) -> i64 
 
 async fn test_delete_ascapade(token: String, router: Router, escapade_id: i64) -> Response<Body> {
     router.oneshot(
-        Request::delete(format!("/escapades/{}", escapade_id))
+        Request::delete(format!("/api/escapades/{}", escapade_id))
         .header("Authorization", format!("Bearer {}", token))
         .body(Body::empty())
         .unwrap()

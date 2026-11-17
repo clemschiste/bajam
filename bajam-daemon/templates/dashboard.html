@@ -4,14 +4,15 @@
   <head>
     <meta charset="UTF-8" />
     <title>bajam</title>
+    <script src="https://unpkg.com/htmx.org@2.0.8"></script>
 
-<link rel="stylesheet" href="static/style.css"/>
-<link rel="icon" href="/favicon.ico"/>
+    <link rel="stylesheet" href="static/style.css"/>
+    <link rel="icon" href="/favicon.ico"/>
 
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/maplibre-gl@^6.7.0/dist/maplibre-gl.css"
-/>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/maplibre-gl@^6.7.0/dist/maplibre-gl.css"
+    />
 
 <style>
   #map {
@@ -47,6 +48,24 @@
   </head>
 
   <body>
+    <h2>Welcome {{ username }}</h2>
+  <form
+    hx-post="/escapades"
+    hx-target="#escapades-list"
+    hx-swap="innerHTML"
+>
+    <label for="name">Escapade</label>
+    <input
+        type="text"
+        id="name"
+        name="name"
+        required
+    >
+    <button type="submit">Create</button>
+  </form>
+    <div id="escapades-list">
+        {% include "escapade_list.html" %}
+    </div>
     <div id="map">
       <div id="map-style-selector">
         <label for="map-style">Style :</label>
@@ -57,7 +76,6 @@
       </div>
     </div>
 
-    <p>Welcome {{ username }}. Bisous faites pas de bétises.
 
 <script type="module">
   import * as maplibregl from "https://unpkg.com/maplibre-gl@6.7.0/dist/maplibre-gl.mjs";
