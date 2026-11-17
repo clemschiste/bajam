@@ -1,8 +1,7 @@
-use askama::Template;
 use axum::Form;
 use axum::body::Body;
 use axum::http::header::SET_COOKIE;
-use axum::response::{Html, IntoResponse, Redirect};
+use axum::response::{IntoResponse, Redirect};
 use axum_extra::extract::cookie::{Cookie, SameSite};
 use bcrypt::verify;
 use axum::{Json, extract::State};
@@ -107,18 +106,3 @@ async fn authenticate(state: &AppState, username: String, password: String) -> R
 
     Ok(token)
 }
-
-
-pub async fn login_view() -> Result<Html<String>, (StatusCode, String)> {
-    let template = LoginTemplate {};
-    let html = template.render().map_err(|e| {
-        (StatusCode::INTERNAL_SERVER_ERROR,
-        format!("Template error: {e}"))
-    })?;
-
-    Ok(Html(html))
-}
-
-#[derive(Template)] // this will generate the code...
-#[template(path = "login.html")]
-struct LoginTemplate {}

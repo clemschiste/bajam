@@ -1,17 +1,18 @@
 use dotenv::dotenv;
 use std::env;
 
-mod routes;
-mod middleware;
-mod config;
-mod state;
-mod db;
-mod tasks;
-
 use config::get_config_from_args;
 use state::{AppState, db_connect};
 use crate::routes::router::create_router;
 use crate::tasks::clean::clean_expired_sessions;
+
+mod config;
+mod state;
+mod routes;
+mod tasks;
+mod db;
+mod middleware;
+mod views;
 
 // Serveur
 #[tokio::main]

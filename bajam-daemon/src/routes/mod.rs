@@ -1,4 +1,3 @@
-pub mod dashboard;
 pub mod escapade_delete;
 pub mod escapade_list;
 pub mod escapade_post;

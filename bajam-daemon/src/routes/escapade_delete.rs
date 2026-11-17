@@ -2,7 +2,6 @@ use axum::{Extension, extract::{State, Path}, http::StatusCode};
 use crate::state::AppState;
 use crate::db::escapade_queries::sql_delete_escapade;
 
-
 pub async fn escapade_delete(
     State(state): State<AppState>,
     Path(escapade_id): Path<i64>,

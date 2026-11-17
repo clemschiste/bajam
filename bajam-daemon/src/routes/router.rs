@@ -1,6 +1,5 @@
 use crate::middleware::auth::*;
 use crate::middleware::logger::*;
-use crate::routes::dashboard::*;
 use crate::routes::escapade_delete::*;
 use crate::routes::escapade_list::*;
 use crate::routes::escapade_post::*;
@@ -11,6 +10,8 @@ use crate::routes::user_login::*;
 use crate::routes::user_logout::*;
 use crate::routes::user_register::*;
 use crate::state::AppState;
+use crate::views::dashboard::*;
+use crate::views::login::*;
 use axum::extract::DefaultBodyLimit;
 use axum::middleware::{from_fn, from_fn_with_state};
 use axum::routing::delete;
@@ -31,6 +32,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/upload/{picture_id}", post(post_picture)) // Upload in conjuction with a hb
         .route("/user/logout", delete(session_logout))
         .route("/dashboard", get(dashboard_view)) // Display the dashboard.html template (last heartbeat loaded)
+        .route("/", get(|| async {})) // redirect either to dashboard or login (see auth middleware)
         .layer(from_fn_with_state(state.clone(), auth)); // auth middleware
 
     // Full router
@@ -39,7 +41,6 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/login", post(login_api)) // login via json
         .route("/login", post(login_web)) // login via form
         .route("/login", get(login_view)) // Verif + token to user
-        .route("/", get(dashboard_view)) // Display the dashboard.html template (last heartbeat loaded)
         .route("/image/{picture_id}", get(get_picture))
         .merge(protected_routes)
         .nest_service("/static", ServeDir::new("static"))

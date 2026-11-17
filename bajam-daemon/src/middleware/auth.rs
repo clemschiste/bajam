@@ -1,5 +1,5 @@
 use axum::http::{HeaderMap, StatusCode, header};
-use axum::response::IntoResponse;
+use axum::response::{IntoResponse, Redirect};
 use axum::{middleware::Next, response::Response};
 use axum::extract::{State, Request};
 use axum_extra::extract::CookieJar;
@@ -58,19 +58,35 @@ impl IntoResponse for AuthError {
 }
 
 pub async fn auth(State(state): State<AppState>, mut req: Request, next: Next) -> Result<Response, AuthError> {
-    let credentials = extract_credential(req.headers())?;
+    let path = req.uri().path().to_string();
+    let credentials = match extract_credential(req.headers()) {
+        Ok(credentials) => credentials,
+        Err(_) => return Ok(Redirect::to("/login").into_response()),
+    };
 
-    let session = match credentials {
+    // Check that the session exists in db. On none variant redirect to /login
+    let opt_session = match credentials {
         AuthCredentials::Bearer(token) => {fetch_opt_session(&state, sha256_hash(token)).await?},
         AuthCredentials::SessionCookie(cookie) => {fetch_opt_session(&state, sha256_hash(cookie)).await?},
     };
 
+    let session = match opt_session {
+        Some(session) => session,
+        None => return Ok(Redirect::to("/login").into_response()), 
+    };
+
+    // Check that the session is valid timewise or delete it
     if session.expires_at < chrono::Utc::now().naive_utc() {
         sql_delete_user_session(&state, &session.user_id).await.map_err(|_| AuthError::DatabaseError)?;
-        return Err(AuthError::SessionExpired);
+        return Ok(Redirect::to("/login").into_response())
     }
 
     req.extensions_mut().insert(session.user_id);
+
+    // Redirect to dashboard if the session is all valid
+    if path == "/" {
+        return Ok(Redirect::to("/dashboard").into_response());
+    }
     
     Ok(next.run(req).await)
 }
@@ -111,12 +127,12 @@ fn extract_credential(headers: &HeaderMap) -> Result<AuthCredentials, AuthError>
     
 }
  
-fn sha256_hash(value: String) -> String {
+pub fn sha256_hash(value: String) -> String {
     let hashed_value = Sha256::digest(value.as_bytes());
     hex::encode(hashed_value)
 }
 
-async fn fetch_opt_session(state: &AppState, hash: String) -> Result<Session, AuthError> {
+pub async fn fetch_opt_session(state: &AppState, hash: String) -> Result<Option<Session>, AuthError> {
     let session_opt = sqlx::query_as!(
         Session,
         r#"
@@ -129,8 +145,5 @@ async fn fetch_opt_session(state: &AppState, hash: String) -> Result<Session, Au
     .await
     .map_err(|_| AuthError::DatabaseError)?;
 
-    match session_opt {
-        Some(session) => Ok(session),
-        None => Err(AuthError::InvalidCredentials)
-    }
+    Ok(session_opt)
 }

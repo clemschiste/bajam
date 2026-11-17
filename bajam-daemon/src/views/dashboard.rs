@@ -62,7 +62,7 @@ pub async fn dashboard_view(
 
    // The askama template (aiming at templates/index.html) is constructed
    // with the last attributes fetched
-    let template = IndexTemplate {
+    let template = DashboardTemplate {
         latitude: response.latitude,
         longitude: response.longitude,
         timestamp: response.timestamp,
@@ -85,7 +85,7 @@ pub async fn dashboard_view(
 
 #[derive(Template)] // this will generate the code...
 #[template(path = "dashboard.html")]
-struct IndexTemplate {
+struct DashboardTemplate {
     latitude: f64,
     longitude: f64,
     timestamp: NaiveDateTime,
