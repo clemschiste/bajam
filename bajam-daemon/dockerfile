@@ -28,10 +28,10 @@ COPY --from=builder /app/target/release/setup /app/setup
 COPY --from=builder /app/target/release/bajam-daemon /app/bajam-daemon
 
 COPY bajam-daemon/static ./static
+COPY bajam-daemon/entrypoint.sh ./entrypoint.sh
 
-RUN chmod +x /app/bajam-daemon/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 3000
 
 ENTRYPOINT ["/app/entrypoint.sh"]
-
