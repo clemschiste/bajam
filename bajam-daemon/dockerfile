@@ -1,29 +1,37 @@
-# --- Build ---
-FROM rust:1.98.1 AS builder
+FROM rust:1.100.0 AS builder
 
 WORKDIR /app
 
-RUN mkdir -p /data
-
+# Workspace
 COPY Cargo.toml Cargo.lock ./
-COPY setup ./setup
 COPY .sqlx .sqlx
-COPY src ./src
-COPY migrations ./migrations
-COPY templates ./templates
+
+# Crates
+COPY bajam-common ./bajam-common
+COPY bajam-cli ./bajam-cli
+COPY bajam-daemon ./bajam-daemon
 
 ENV SQLX_OFFLINE=true
 
-RUN cargo build --release
+# On travaille depuis le daemon
+WORKDIR /app/bajam-daemon
+
+RUN cargo build --release --bin setup
+RUN cargo build --release --bin bajam-daemon
 
 # --- Runtime ---
 FROM debian:bookworm-slim
 
 WORKDIR /app
 
-COPY --from=builder /app/target/release/bajam /app/bajam
-COPY static ./static
+COPY --from=builder /app/target/release/setup /app/setup
+COPY --from=builder /app/target/release/bajam-daemon /app/bajam-daemon
+
+COPY bajam-daemon/static ./static
+
+RUN chmod +x /app/bajam-daemon/entrypoint.sh
 
 EXPOSE 3000
 
-CMD ["/app/bajam"]
+ENTRYPOINT ["/app/entrypoint.sh"]
+
