@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT name, id\n        FROM escapades\n        INNER JOIN escapades_map\n          ON escapades.id = escapades_map.escapade_id\n        WHERE escapades_map.user_id = ?\n        LIMIT 100\n    ",
+  "describe": {
+    "columns": [
+      {
+        "name": "name",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "escapades",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "name": "id",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "escapades",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "1cf7e3f98229682ede191298c89125e31fb44234bcdb8b3e9fa700231cb6979e"
+}
