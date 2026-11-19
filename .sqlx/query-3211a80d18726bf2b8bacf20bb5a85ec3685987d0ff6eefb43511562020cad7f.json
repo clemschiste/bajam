@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n            SELECT latitude, longitude, timestamp, description, picture_id, user_id, escapade_id\n            FROM heartbeats\n            ORDER BY timestamp DESC\n            LIMIT 1\n        ",
+  "query": "\n            SELECT latitude, longitude, timestamp, description, picture_id, user_id, escapade_id\n            FROM heartbeats\n            WHERE user_id = ?\n            ORDER BY timestamp DESC\n            LIMIT 1\n        ",
   "describe": {
     "columns": [
       {
@@ -82,7 +82,7 @@
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
       false,
@@ -94,5 +94,5 @@
       false
     ]
   },
-  "hash": "0e92c53e4a81c5b711672948a5d85002e5edbaec7e686d7318deca11baa21bb6"
+  "hash": "3211a80d18726bf2b8bacf20bb5a85ec3685987d0ff6eefb43511562020cad7f"
 }
