@@ -13,6 +13,7 @@ enum AuthCredentials {
     SessionCookie(String),
 }
 
+#[allow(unused)]
 #[derive(Debug)]
 pub enum AuthError {
     AmbiguousCredentials,
