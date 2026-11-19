@@ -22,16 +22,18 @@ pub async fn dashboard_view(
 
     // Database query, guetting the last timestamped row
     // If empty return an empty row error.
-    let heartbeat = sqlx::query_as!(
+    let heartbeat_opt = sqlx::query_as!(
         Heartbeat,
         r#"
             SELECT latitude, longitude, timestamp, description, picture_id, user_id, escapade_id
             FROM heartbeats
+            WHERE user_id = ?
             ORDER BY timestamp DESC
             LIMIT 1
-        "#
+        "#,
+        user_id
     )
-    .fetch_one(&state.db)
+    .fetch_optional(&state.db)
     .await
     .map_err(|e| {
         eprintln!("Database error {}", e);
@@ -41,57 +43,74 @@ pub async fn dashboard_view(
         )
     })?;
 
-    // Response is constructed from the previous sql query
-    // 1) first as a struct HeartbeatResponse that includes the historic
-    // 2) then as a json heartbeat_json
-    let response = HeartbeatResponse {
-        latitude: heartbeat.latitude,
-        longitude: heartbeat.longitude,
-        timestamp: heartbeat.timestamp,
-        description: heartbeat.description,
-        picture_id: heartbeat.picture_id,
-        history: state.history.clone(),
+    let escapades = sql_list_escapades(&state, &user_id).await?;
+
+
+    let template = match heartbeat_opt {
+        Some(heartbeat) => {
+            // Response is constructed from the previous sql query
+            // 1) first as a struct HeartbeatResponse that includes the historic
+            // 2) then as a json heartbeat_json
+            let response = HeartbeatResponse {
+                latitude: heartbeat.latitude,
+                longitude: heartbeat.longitude,
+                timestamp: heartbeat.timestamp,
+                description: heartbeat.description,
+                picture_id: heartbeat.picture_id,
+                history: state.history.clone(),
+            };
+
+            let history_json = serde_json::to_string(&response.history)
+                .map_err(|e| {
+                  (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Serialization error: {e}"),
+                  )
+                }
+             )?;
+
+           // The askama template (aiming at templates/index.html) is constructed
+           // with the last attributes fetched
+            DashboardTemplate {
+                latitude: Some(response.latitude),
+                longitude: response.longitude,
+                timestamp: response.timestamp,
+                description: response.description.clone().unwrap_or_default(),
+                picture_id: response.picture_id.clone(),
+                history_json,
+                username,
+                escapades,
+            }
+
+            
+        },
+        None => {
+            DashboardTemplate {
+                latitude: None,
+                longitude: 0.0,
+                timestamp: NaiveDateTime::default(),
+                description: String::new(),
+                picture_id: String::new(),
+                history_json: "[]".to_string(),
+                username,
+                escapades,
+            }
+        },
     };
+            let html = template.render().map_err(|e| {
+              (
+                  StatusCode::INTERNAL_SERVER_ERROR,
+                  format!("Template error: {e}"),
+              )
+            })?;
 
-    let history_json = serde_json::to_string(&response.history)
-        .map_err(|e| {
-          (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Serialization error: {e}"),
-          )
-        }
-     )?;
-
-     let escapades = sql_list_escapades(&state, &user_id).await?;
-
-   // The askama template (aiming at templates/index.html) is constructed
-   // with the last attributes fetched
-    let template = DashboardTemplate {
-        latitude: response.latitude,
-        longitude: response.longitude,
-        timestamp: response.timestamp,
-        description: response.description.clone().unwrap_or_default(),
-        picture_id: response.picture_id.clone(),
-        history_json,
-        username,
-        escapades
-    };
-
-    let html = template.render().map_err(|e| {
-      (
-          StatusCode::INTERNAL_SERVER_ERROR,
-          format!("Template error: {e}"),
-      )
-    })?;
-
-    Ok(Html(html))
-    
+            Ok(Html(html))
 }
 
 #[derive(Template)] // this will generate the code...
 #[template(path = "dashboard.html")]
 struct DashboardTemplate {
-    latitude: f64,
+    latitude: Option<f64>,
     longitude: f64,
     timestamp: NaiveDateTime,
     description: String,

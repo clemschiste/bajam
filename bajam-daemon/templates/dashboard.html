@@ -1,177 +1,261 @@
 <!DOCTYPE html>
-
 <html lang="fr">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <title>bajam</title>
+
     <script src="https://unpkg.com/htmx.org@2.0.8"></script>
 
     <link rel="stylesheet" href="static/style.css"/>
     <link rel="icon" href="/favicon.ico"/>
 
     <link
-      rel="stylesheet"
-      href="https://unpkg.com/maplibre-gl@^6.7.0/dist/maplibre-gl.css"
+        rel="stylesheet"
+        href="https://unpkg.com/maplibre-gl@^6.7.0/dist/maplibre-gl.css"
     />
 
-<style>
-  #map {
-    height: 1000px;
-    position: relative;
-  }
+    <style>
+        #map {
+            height: 1000px;
+            position: relative;
+        }
 
-  #map-style-selector {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 1;
-    background: white;
-    padding: 8px;
-    border-radius: 4px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-  }
+        #map-style-selector {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1;
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+        }
 
-  #map-style-selector select {
-    padding: 5px;
-  }
+        #map-style-selector select {
+            padding: 5px;
+        }
 
-  .map-popup-image {
-    display: block;
-    width: 250px;
-    max-height: 250px;
-    object-fit: cover;
-    margin-top: 10px;
-    border-radius: 4px;
-  }
-</style>
+        .map-popup-image {
+            display: block;
+            width: 250px;
+            max-height: 250px;
+            object-fit: cover;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
 
-  </head>
+<body>
 
-  <body>
     <h2>Welcome {{ username }}</h2>
-  <form
-    hx-post="/escapades"
-    hx-target="#escapades-list"
-    hx-swap="innerHTML"
->
-    <label for="name">Escapade</label>
-    <input
-        type="text"
-        id="name"
-        name="name"
-        required
+
+    <!-- Escapades -->
+    <form
+        hx-post="/escapades"
+        hx-target="#escapades-list"
+        hx-swap="innerHTML"
     >
-    <button type="submit">Create</button>
-  </form>
+        <label for="name">Escapade</label>
+
+        <input
+            type="text"
+            id="name"
+            name="name"
+            required
+        >
+
+        <button type="submit">Create</button>
+    </form>
+
     <div id="escapades-list">
         {% include "escapade_list.html" %}
     </div>
+
+
+    <!-- Informations du heartbeat actuel -->
+    {% match latitude %}
+        {% when Some with (lat) %}
+
+            <div
+                id="current-heartbeat"
+                hidden
+                data-latitude="{{ lat }}"
+                data-longitude="{{ longitude }}"
+                data-timestamp="{{ timestamp }}"
+                data-description="{{ description }}"
+                data-picture-id="{{ picture_id }}"
+            ></div>
+
+        {% when None %}
+            <p id="no-heartbeat">No heartbeat created yet.</p>
+    {% endmatch %}
+
+
+    <!-- Carte -->
     <div id="map">
-      <div id="map-style-selector">
-        <label for="map-style">Style :</label>
-        <select id="map-style">
-          <option value="globe">Globe</option>
-          <option value="positron">Positron</option>
-        </select>
-      </div>
+
+        <div id="map-style-selector">
+            <label for="map-style">Style :</label>
+
+            <select id="map-style">
+                <option value="globe">Globe</option>
+                <option value="positron">Positron</option>
+            </select>
+        </div>
+
     </div>
 
 
 <script type="module">
-  import * as maplibregl from "https://unpkg.com/maplibre-gl@6.7.0/dist/maplibre-gl.mjs";
 
-  const styles = {
-    globe: "https://demotiles.maplibre.org/globe.json",
-    positron: "https://tiles.openfreemap.org/styles/positron"
-  };
+    import * as maplibregl from
+        "https://unpkg.com/maplibre-gl@6.7.0/dist/maplibre-gl.mjs";
 
-  const currentPosition = [{{ longitude }}, {{ latitude }}];
 
-  const map = new maplibregl.Map({
-    container: "map",
-    style: styles.globe,
-    center: [-50, 0],
-    zoom: 2.5,
-    minZoom: 2.5,
-    maxZoom: 20,
-  });
+    // --------------------------------------------------
+    // Configuration de la carte
+    // --------------------------------------------------
 
-  async function loadMarkers() {
-    // Position actuelle
-    const currentPosition = [{{ longitude }}, {{ latitude }}];
+    const styles = {
+        globe: "https://demotiles.maplibre.org/globe.json",
+        positron: "https://tiles.openfreemap.org/styles/positron"
+    };
 
-    const currentPopup = new maplibregl.Popup({ offset: 25 })
-      .setHTML(`
-        <h2>{{ timestamp }}</h2>
+    // Centrage par défaut sur la France si aucun heartbeat
+    const hasCurrent = document.getElementById("current-heartbeat") !== null;
+    const defaultCenter = hasCurrent ? [-50, 0] : [2.2137, 46.2276];
+    const defaultZoom = hasCurrent ? 2.5 : 2.5;
 
-        <p>{{ description }}</p>
+    const map = new maplibregl.Map({
+        container: "map",
+        style: styles.globe,
+        center: defaultCenter,
+        zoom: defaultZoom,
+        minZoom: 2.5,
+        maxZoom: 20,
+    });
 
-        <img
-          class="map-popup-image"
-          src="/image/{{ picture_id }}"
-          alt="Photo de la position"
-        >
-      `);
 
-    // Anciennes positions
-    for (const beat of {{ history_json|safe }}) {
-      const position = [beat.longitude, beat.latitude];
+    // --------------------------------------------------
+    // Historique des heartbeats
+    // --------------------------------------------------
 
-      const historyPopup = new maplibregl.Popup({ offset: 25 })
-        .setHTML(`
-          <h2>${beat.timestamp}</h2>
+    // Askama injecte toujours un tableau JSON valide.
+    const history = {{ history_json|safe }};
 
-          <p>${beat.description}</p>
+    // --------------------------------------------------
+    // Construction des popups
+    // --------------------------------------------------
 
-          ${
-            beat.picture_id
-              ? `
-                <img
-                  class="map-popup-image"
-                  src="/image/${beat.picture_id}"
-                  alt="Photo de la position"
-                >
-              `
-              : ""
-          }
-        `);
+    function createPopup(beat) {
 
-      new maplibregl.Marker({
-        color: "#888888",
-      })
-        .setLngLat(position)
-        .setPopup(historyPopup)
-        .addTo(map);
+        const content = document.createElement("div");
+
+        const title = document.createElement("h2");
+        title.textContent = beat.timestamp;
+
+        const description = document.createElement("p");
+        description.textContent = beat.description ?? "";
+
+        content.appendChild(title);
+        content.appendChild(description);
+
+        if (beat.picture_id) {
+
+            const image = document.createElement("img");
+
+            image.className = "map-popup-image";
+            image.src = `/image/${encodeURIComponent(beat.picture_id)}`;
+            image.alt = "Photo de la position";
+
+            content.appendChild(image);
+        }
+
+        return new maplibregl.Popup({ offset: 25 })
+            .setDOMContent(content);
     }
 
-    // Position actuelle
-    new maplibregl.Marker({
-      color: "#ff0000",
-    })
-      .setLngLat(currentPosition)
-      .setPopup(currentPopup)
-      .addTo(map);
 
-    // Centrer sur la position actuelle
-    map.flyTo({
-      center: currentPosition,
-      zoom: 10,
+    // --------------------------------------------------
+    // Chargement des marqueurs
+    // --------------------------------------------------
+
+    function loadMarkers() {
+
+        // Anciennes positions
+        for (const beat of history) {
+
+            const position = [
+                beat.longitude,
+                beat.latitude
+            ];
+
+            new maplibregl.Marker({
+                color: "#888888",
+            })
+                .setLngLat(position)
+                .setPopup(createPopup(beat))
+                .addTo(map);
+        }
+
+
+        // Position actuelle
+        const current = document.getElementById("current-heartbeat");
+
+        if (current) {
+
+            const currentPosition = [
+                Number(current.dataset.longitude),
+                Number(current.dataset.latitude)
+            ];
+
+            const currentHeartbeat = {
+                latitude: current.dataset.latitude,
+                longitude: current.dataset.longitude,
+                timestamp: current.dataset.timestamp,
+                description: current.dataset.description,
+                picture_id: current.dataset.pictureId
+            };
+
+            new maplibregl.Marker({
+                color: "#ff0000",
+            })
+                .setLngLat(currentPosition)
+                .setPopup(createPopup(currentHeartbeat))
+                .addTo(map);
+
+            // Centrer la carte sur la dernière position
+            map.flyTo({
+                center: currentPosition,
+                zoom: 10,
+            });
+        }
+    }
+
+
+    // --------------------------------------------------
+    // Changement de style
+    // --------------------------------------------------
+
+    const styleSelector = document.getElementById("map-style");
+
+    styleSelector.addEventListener("change", (event) => {
+
+        const selectedStyle = event.target.value;
+
+        map.setStyle(styles[selectedStyle]);
     });
-  }
 
-  // Changement de style
-  const styleSelector = document.getElementById("map-style");
 
-  styleSelector.addEventListener("change", (event) => {
-    const selectedStyle = event.target.value;
+    // --------------------------------------------------
+    // Initialisation
+    // --------------------------------------------------
 
-    map.setStyle(styles[selectedStyle]);
-  });
+    loadMarkers();
 
-  // Chargement initial
-  loadMarkers();
 </script>
 
-  </body>
+</body>
 </html>
 
