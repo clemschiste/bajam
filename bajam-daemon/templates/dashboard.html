@@ -43,6 +43,49 @@
             margin-top: 10px;
             border-radius: 4px;
         }
+
+        /* ---------- Séparation Map / Liste ---------- */
+        .dashboard-split {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            align-items: flex-start;
+        }
+
+        .escapades-list {
+            flex: 0 0 340px;
+            max-width: 340px;
+            overflow-y: auto;
+            max-height: calc(100vh - 240px);
+            padding: 1rem;
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .escapade-item {
+            padding: 0.6rem 0.8rem;
+            border-bottom: 1px solid #e5e7eb;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .escapade-item:last-child {
+            border-bottom: none;
+        }
+
+        .escapade-item:hover {
+            background: #f3f4f6;
+            color: var(--primary);
+        }
+
+        #map {
+            flex: 1;
+            height: 1000px;
+            position: relative;
+            min-width: 0;
+        }
     </style>
 </head>
 
@@ -68,40 +111,43 @@
         <button type="submit">Create</button>
     </form>
 
-    <div id="escapades-list">
-        {% include "escapade_list.html" %}
-    </div>
+    <div class="dashboard-split">
 
+        <!-- Liste des escapades -->
+        <div id="escapades-list" class="escapades-list">
+            {% include "escapade_list.html" %}
+        </div>
 
-    <!-- Informations du heartbeat actuel -->
-    {% match latitude %}
-        {% when Some with (lat) %}
+        <!-- Informations du heartbeat actuel -->
+        {% match latitude %}
+            {% when Some with (lat) %}
 
-            <div
-                id="current-heartbeat"
-                hidden
-                data-latitude="{{ lat }}"
-                data-longitude="{{ longitude }}"
-                data-timestamp="{{ timestamp }}"
-                data-description="{{ description }}"
-                data-picture-id="{{ picture_id }}"
-            ></div>
+                <div
+                    id="current-heartbeat"
+                    hidden
+                    data-latitude="{{ lat }}"
+                    data-longitude="{{ longitude }}"
+                    data-timestamp="{{ timestamp }}"
+                    data-description="{{ description }}"
+                    data-picture-id="{{ picture_id }}"
+                ></div>
 
-        {% when None %}
-            <p id="no-heartbeat">No heartbeat created yet.</p>
-    {% endmatch %}
+            {% when None %}
+                <p id="no-heartbeat">No heartbeat created yet.</p>
+        {% endmatch %}
 
+        <!-- Carte -->
+        <div id="map">
 
-    <!-- Carte -->
-    <div id="map">
+            <div id="map-style-selector">
+                <label for="map-style">Style :</label>
 
-        <div id="map-style-selector">
-            <label for="map-style">Style :</label>
+                <select id="map-style">
+                    <option value="globe">Globe</option>
+                    <option value="positron">Positron</option>
+                </select>
+            </div>
 
-            <select id="map-style">
-                <option value="globe">Globe</option>
-                <option value="positron">Positron</option>
-            </select>
         </div>
 
     </div>
@@ -232,6 +278,125 @@
             });
         }
     }
+
+
+    // --------------------------------------------------
+    // Survol des escapades : afficher leurs heartbeats sur la carte
+    // --------------------------------------------------
+
+    const heartbeats = {{ heartbeats_json|safe }};
+
+    let hoverMarkers = [];
+
+    function clearHoverMarkers() {
+        for (const marker of hoverMarkers) {
+            marker.remove();
+        }
+        hoverMarkers = [];
+    }
+
+    function showEscapadeHeartbeats(escapadeId) {
+        const beats = heartbeats.filter((beat) => beat.escapade_id == escapadeId);
+
+        if (beats.length === 0) {
+            return;
+        }
+
+        clearHoverMarkers();
+
+        for (const beat of beats) {
+            const position = [beat.longitude, beat.latitude];
+            const marker = new maplibregl.Marker({ color: "#0066ff" })
+                .setLngLat(position)
+                .setPopup(createPopup(beat))
+                .addTo(map);
+            hoverMarkers.push(marker);
+        }
+
+        // Centre pondéré : moyenne des coordonnées
+        const avgLng =
+            beats.reduce((sum, beat) => sum + Number(beat.longitude), 0) /
+            beats.length;
+        const avgLat =
+            beats.reduce((sum, beat) => sum + Number(beat.latitude), 0) /
+            beats.length;
+
+        map.flyTo({
+            center: [avgLng, avgLat],
+            zoom: 3,
+            essential: true,
+        });
+    }
+
+    function showGlobalView() {
+        const bounds = new maplibregl.LngLatBounds();
+
+        // Tous les heartbeats de l'historique
+        for (const beat of heartbeats) {
+            bounds.extend([beat.longitude, beat.latitude]);
+        }
+
+        // Position actuelle si présente
+        const current = document.getElementById("current-heartbeat");
+        if (current) {
+            bounds.extend([
+                Number(current.dataset.longitude),
+                Number(current.dataset.latitude),
+            ]);
+        }
+
+        // Marqueurs de survol actuellement affichés
+        for (const marker of hoverMarkers) {
+            bounds.extend(marker.getLngLat());
+        }
+
+        if (!bounds.isEmpty()) {
+            map.flyTo({
+                bounds,
+                padding: 40,
+                essential: true,
+            });
+        }
+    }
+
+    // Délégation d'événements sur la liste (résiste au rechargement htmx)
+    // mouseover / mouseout car mouseenter/mouseleave ne bouillonnent pas.
+    const listEl = document.getElementById("escapades-list");
+
+    let currentHoveredItem = null;
+
+    listEl.addEventListener("mouseover", (event) => {
+        const item = event.target.closest(".escapade-item");
+        if (!item) {
+            return;
+        }
+
+        // Déjà survolons cet item : ne rien faire
+        if (item === currentHoveredItem) {
+            return;
+        }
+
+        currentHoveredItem = item;
+        const escapadeId = Number(item.dataset.escapadeId);
+        showEscapadeHeartbeats(escapadeId);
+    });
+
+    listEl.addEventListener("mouseout", (event) => {
+        const item = event.target.closest(".escapade-item");
+        // La souris quitte la liste ou un item : vérifier si on va vers un autre item
+        const related = event.relatedTarget ? event.relatedTarget.closest(".escapade-item") : null;
+
+        if (related && item === currentHoveredItem) {
+            // Passage d'un item à un autre : laisser le prochain mouseover gérer le changement
+            return;
+        }
+
+        if (item === currentHoveredItem) {
+            currentHoveredItem = null;
+            clearHoverMarkers();
+            showGlobalView();
+        }
+    });
 
 
     // --------------------------------------------------

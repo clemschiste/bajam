@@ -15,7 +15,7 @@ pub struct Credentials {
 #[derive(Args, Serialize, Deserialize, Clone)]
 pub struct Connection {
     #[arg(short, long)]
-    pub adress: String,
+    pub address: String,
     #[arg(short, long)]
     pub port: u16,
 }
@@ -55,7 +55,7 @@ pub async fn get_auth_token(credentials: &Credentials) -> Result<String, CliErro
     body_json.insert("username", credentials.username.clone());
     body_json.insert("password", credentials.password.clone());
     let body = client
-        .post(format!("http://{}:{}/user/login", connection.adress, connection.port))
+        .post(format!("http://{}:{}/user/login", connection.address, connection.port))
         .json(&body_json)
         .send()
         .await?;
@@ -90,7 +90,7 @@ pub async fn status() -> Result<(), CliError> {
         };
         println!("User: {}.\nServer: http://{}:{}.",
             current_user,
-            config.server_info.adress,
+            config.server_info.address,
             config.server_info.port);
 
         Ok(())
@@ -104,7 +104,7 @@ pub async fn register_request(client: Client, credentials: &Credentials) -> Resu
     body_json.insert("username", credentials.username.clone());
     body_json.insert("password", credentials.password.clone());
     let body = client
-        .post(format!("http://{}:{}/user/new", connection.adress, connection.port))
+        .post(format!("http://{}:{}/user/new", connection.address, connection.port))
         .json(&body_json)
         .send()
         .await?;

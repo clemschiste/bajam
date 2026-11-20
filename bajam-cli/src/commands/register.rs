@@ -13,7 +13,7 @@ pub async fn register(credentials: &Credentials) -> Result<(), CliError> {
     body_json.insert("username", credentials.username.clone());
     body_json.insert("password", credentials.password.clone());
     let body = client
-        .post(format!("http://{}:{}/user/new", connection.adress, connection.port))
+        .post(format!("http://{}:{}/user/new", connection.address, connection.port))
         .json(&body_json)
         .send()
         .await?;

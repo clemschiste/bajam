@@ -10,7 +10,7 @@ pub async fn status() -> Result<(), CliError> {
         };
         println!("User: {}.\nServer: http://{}:{}.",
             current_user,
-            config.server_info.adress,
+            config.server_info.address,
             config.server_info.port);
 
         Ok(())

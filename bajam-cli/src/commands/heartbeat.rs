@@ -23,7 +23,7 @@ pub async fn create_heartbeat(escinput: EscInput, latitude: f64, longitude: f64,
         EscInput::Id(escapade_id) => escapade_id,
         EscInput::Name(escapade_name) => {
           let response = client
-              .get(format!("http://{}:{}/escapades", config.server_info.adress, config.server_info.port))
+              .get(format!("http://{}:{}/escapades", config.server_info.address, config.server_info.port))
               .header(header::AUTHORIZATION, format!("Bearer {}", user.token))
               .send()
               .await?;
@@ -60,7 +60,7 @@ pub async fn create_heartbeat(escinput: EscInput, latitude: f64, longitude: f64,
 
       // Post hearbeat
       let response = client
-          .post(format!("http://{}:{}/escapades/{}/heartbeat", config.server_info.adress, config.server_info.port, escapade_id))
+          .post(format!("http://{}:{}/api/escapades/{}/heartbeat", config.server_info.address, config.server_info.port, escapade_id))
           .header(header::AUTHORIZATION, format!("Bearer {}", user.token))
           .json(&heartbeat_json)
           .send()

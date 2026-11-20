@@ -22,10 +22,10 @@ pub struct Credentials {
     pub password: String,
 }
 
-#[derive(Args, Serialize, Deserialize, Clone)]
+#[derive(Args, Serialize, Deserialize, Clone, Debug)]
 pub struct Connection {
     #[arg(short, long)]
-    pub adress: String,
+    pub address: String,
     #[arg(short, long)]
     pub port: u16,
 }
@@ -36,9 +36,10 @@ pub struct CurrentUser {
     token: String,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Config {
     pub server_info: Connection,
+    #[serde(default)]
     pub connected_user: Option<CurrentUser>,
 }
 
@@ -86,7 +87,7 @@ pub async fn get_auth_token(credentials: &Credentials) -> Result<String, CliErro
     body_json.insert("username", credentials.username.clone());
     body_json.insert("password", credentials.password.clone());
     let response = client
-        .post(format!("http://{}:{}/user/login", connection.adress, connection.port))
+        .post(format!("http://{}:{}/api/login", connection.address, connection.port))
         .json(&body_json)
         .send()
     .await?;

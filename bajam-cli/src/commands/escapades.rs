@@ -17,7 +17,7 @@ pub async fn create_escapade(escapade_name: String) -> Result<(), CliError> {
       body_json.insert("name", escapade_name);
 
       let response = client
-          .post(format!("http://{}:{}/escapades", config.server_info.adress, config.server_info.port))
+          .post(format!("http://{}:{}/api/escapades", config.server_info.address, config.server_info.port))
           .header(header::AUTHORIZATION, format!("Bearer {}", user.token))
           .json(&body_json)
           .send()
@@ -46,13 +46,13 @@ pub async fn list_escapades() -> Result<(), CliError> {
       let client = reqwest::Client::new();
 
       let response = client
-          .get(format!("http://{}:{}/escapades", config.server_info.adress, config.server_info.port))
+          .get(format!("http://{}:{}/escapades", config.server_info.address, config.server_info.port))
           .header(header::AUTHORIZATION, format!("Bearer {}", user.token))
           .send()
           .await?;
 
       match response.status() {
-        StatusCode::NOT_FOUND => println!("No escapade found for {} in {}:{}.", user.username, config.server_info.adress, config.server_info.port),
+        StatusCode::NOT_FOUND => println!("No escapade found for {} in {}:{}.", user.username, config.server_info.address, config.server_info.port),
         StatusCode::OK => {
           let list: Vec<Escapade> = response.json().await?;
           println!("Available escapades:");

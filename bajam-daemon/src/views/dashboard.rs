@@ -45,6 +45,33 @@ pub async fn dashboard_view(
 
     let escapades = sql_list_escapades(&state, &user_id).await?;
 
+    // Tous les heartbeats de l'utilisateur, pour le survol carte par escapade
+    let user_heartbeats = sqlx::query_as!(
+        Heartbeat,
+        r#"
+            SELECT latitude, longitude, timestamp, description, picture_id, user_id, escapade_id
+            FROM heartbeats
+            WHERE user_id = ?
+            ORDER BY timestamp DESC
+        "#,
+        user_id
+    )
+    .fetch_all(&state.db)
+    .await
+    .map_err(|e| {
+        eprintln!("Database error {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Database error : {e}"),
+        )
+    })?;
+
+    let heartbeats_json = serde_json::to_string(&user_heartbeats).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Serialization error: {e}"),
+        )
+    })?;
 
     let template = match heartbeat_opt {
         Some(heartbeat) => {
@@ -78,6 +105,7 @@ pub async fn dashboard_view(
                 description: response.description.clone().unwrap_or_default(),
                 picture_id: response.picture_id.clone(),
                 history_json,
+                heartbeats_json,
                 username,
                 escapades,
             }
@@ -92,6 +120,7 @@ pub async fn dashboard_view(
                 description: String::new(),
                 picture_id: String::new(),
                 history_json: "[]".to_string(),
+                heartbeats_json,
                 username,
                 escapades,
             }
@@ -116,6 +145,7 @@ struct DashboardTemplate {
     description: String,
     picture_id: String,
     history_json: String,
+    heartbeats_json: String,
     username: String,
     escapades: Vec<Escapade>,
 }
