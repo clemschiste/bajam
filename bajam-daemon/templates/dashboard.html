@@ -207,19 +207,58 @@
         content.appendChild(title);
         content.appendChild(description);
 
+        let image = null;
+        let imagePlaceholder = null;
+
         if (beat.picture_id) {
 
-            const image = document.createElement("img");
+            // Placeholder affiché tant que la photo n'est pas chargée
+            imagePlaceholder = document.createElement("div");
+            imagePlaceholder.textContent = "📷 Photo disponible — ouvrez pour afficher";
+            imagePlaceholder.style.width = "250px";
+            imagePlaceholder.style.height = "250px";
+            imagePlaceholder.style.border = "1px dashed #ccc";
+            imagePlaceholder.style.borderRadius = "4px";
+            imagePlaceholder.style.display = "flex";
+            imagePlaceholder.style.alignItems = "center";
+            imagePlaceholder.style.justifyContent = "center";
+            imagePlaceholder.style.color = "#888";
+            imagePlaceholder.style.fontSize = "0.85rem";
+            imagePlaceholder.style.background = "#fafafa";
 
+            // L'image est créée avec un src vide : aucune requête HTTP n'est déclenchée pour l'instant
+            image = document.createElement("img");
             image.className = "map-popup-image";
-            image.src = `/image/${encodeURIComponent(beat.picture_id)}`;
             image.alt = "Photo de la position";
+            image.style.display = "none";
+            image.src = "";
 
+            content.appendChild(imagePlaceholder);
             content.appendChild(image);
         }
 
-        return new maplibregl.Popup({ offset: 25 })
+        const popup = new maplibregl.Popup({ offset: 25 })
             .setDOMContent(content);
+
+        // Chargement différé : la photo n'est récupérée qu'à l'ouverture du popup
+        if (image && imagePlaceholder && beat.picture_id) {
+
+            image.onerror = () => {
+                image.style.display = "none";
+                imagePlaceholder.style.display = "flex";
+                imagePlaceholder.textContent = "Photo indisponible";
+            };
+
+            popup.on("open", () => {
+                if (!image.src) {
+                    image.src = `/image/${encodeURIComponent(beat.picture_id)}`;
+                    image.style.display = "block";
+                    imagePlaceholder.style.display = "none";
+                }
+            });
+        }
+
+        return popup;
     }
 
 
