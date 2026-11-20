@@ -9,16 +9,8 @@ Instead of using Polarstep, you run your own minimal pipeline:
 1. **iPhone Shortcuts** grab your GPS latitude/longitude
 2. Connect to **Tailscale**
 3. **POST** your position to the server on the tailnet:
-   ```json
-   {
-     "latitude": XX.XXXXX,
-     "longitude": XX.XXXXX
-   }
-   ```
 4. A **pin appears on a web map** (powered by [MapLibre GL JS](https://maplibre.org/))
 5. Optionally add text descriptions and photos
-
-> "But more.... much more than this... I did it my way..."
 
 ## Tech stack
 
@@ -59,23 +51,42 @@ Instead of using Polarstep, you run your own minimal pipeline:
 └── tests/                         # tests
 ```
 
-## Quick start
+## Starting the Server
+
+Once you have cloned the project, you have two options.
+
+### Option 1: Docker Compose (local server, `0.0.0.0:3000`)
+
+Starts the server on all network interfaces (`0.0.0.0:3000`). Ideal for local deployment or running on a tailnet.
 
 ```bash
-# Clone the repo
-git clone <repo-url>
-cd bajam
-
-# 1. Create the SQLite database and a .env file with predefined values (you can pass --"your_db_name" as an option)
-# From the root directory
-cargo run -p bajam-daemon --bin setup
-
-# 2. Launch the server
-# By default binds to TCP_LOCAL. Use --tailnet to bind to TCP_TAILNET instead (make sure to edit the .env file with the correct tailnet value)
-cargo run -- --tailnet
+docker compose up
 ```
 
-Required environment variables (in `.env`):
+The server will be accessible at `http://0.0.0.0:3000`. Data (SQLite database and uploaded photos) is persisted in named Docker volumes (`bajam_data` and `bajam_uploads`).
+
+### Option 2: `just start` (development, `localhost`)
+
+Starts the server in development mode on `localhost`. Requires [ `just` ](https://github.com/casey/just) and a Rust toolchain to be installed.
+
+```bash
+just start
+```
+
+This command:
+1. Runs the database migration / initialization (`cargo run --bin setup`).
+2. Starts the server (`cargo run --bin bajam-daemon`).
+
+### `just prep`: Regenerate `.sqlx/` after schema changes
+
+Whenever you modify an SQL query or a database migration, regenerate the `sqlx` query metadata files before committing:
+
+```bash
+just prep
+```
+This updates the `.sqlx/` directory at the workspace root. This directory is required for production builds (Docker builds with `SQLX_OFFLINE=true`), preventing `sqlx` from attempting to connect to a database during compilation.## Lancement du serveur
+
+## Variables d'environnement requises (`.env`):
 - `DATABASE_PATH` — path to the SQLite database file
 - `TCP_LOCAL` — address to bind when not using tailnet (e.g. `0.0.0.0:3000`)
 - `TCP_TAILNET` — address to bind when using `--tailnet` (e.g. `100.x.y.z:3000`)
