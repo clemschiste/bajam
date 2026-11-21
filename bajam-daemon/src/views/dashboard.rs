@@ -17,7 +17,6 @@ pub async fn dashboard_view(
     State(state): State<AppState>,
     Extension(user_id): Extension<i64>
 ) -> Result<Html<String>, (StatusCode, String)> {
-    println!("Index request received");
     let username = sql_username_from_id(&state, &user_id).await?;
 
     // Database query, guetting the last timestamped row
@@ -25,7 +24,7 @@ pub async fn dashboard_view(
     let heartbeat_opt = sqlx::query_as!(
         Heartbeat,
         r#"
-            SELECT latitude, longitude, timestamp, description, picture_id, user_id, escapade_id
+            SELECT *
             FROM heartbeats
             WHERE user_id = ?
             ORDER BY timestamp DESC
@@ -49,7 +48,7 @@ pub async fn dashboard_view(
     let user_heartbeats = sqlx::query_as!(
         Heartbeat,
         r#"
-            SELECT latitude, longitude, timestamp, description, picture_id, user_id, escapade_id
+            SELECT *
             FROM heartbeats
             WHERE user_id = ?
             ORDER BY timestamp DESC

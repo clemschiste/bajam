@@ -3,8 +3,8 @@ use reqwest::{StatusCode, header};
 
 use crate::EscInput;
 use crate::{errors::CliError};
-use crate::commands::load_session_config;
-use bajam_common::models::heartbeat::{HeartbeatPost};
+use crate::commands::{load_session_config};
+use bajam_common::models::heartbeat::{Heartbeat, HeartbeatPost};
 
 // Create a simple heartbeat without image
 pub async fn create_heartbeat(escinput: EscInput, latitude: f64, longitude: f64, description: Option<String>) -> Result<(), CliError> {
@@ -82,3 +82,65 @@ pub async fn create_heartbeat(escinput: EscInput, latitude: f64, longitude: f64,
 
     Ok(())
 }
+
+pub async fn list_heartbeats_from(escinput: EscInput) -> Result<(), CliError>  {
+    // Load config
+    let config = load_session_config()?;
+
+    // Check if config contains a user
+    if let Some(user) = config.connected_user.as_ref() {
+
+      // Start the client for the two requests coming
+      let client = reqwest::Client::new();
+
+      // Get escapade_id, either directly from user input or from name matching
+      let escapade_id: i64 = match escinput {
+        EscInput::Id(escapade_id) => escapade_id,
+        EscInput::Name(escapade_name) => {
+          let response = client
+              .get(format!("http://{}:{}/escapades", config.server_info.address, config.server_info.port))
+              .header(header::AUTHORIZATION, format!("Bearer {}", user.token))
+              .send()
+              .await?;
+
+          match response.status() {
+            StatusCode::OK => {
+              let list: Vec<Escapade> = response.json().await?;
+
+              let mut matches = list
+                  .iter()
+                  .filter(|e| e.name == escapade_name);
+
+              match (matches.next(), matches.next()) {
+                  (Some(escapade), None) => escapade.id,
+                  (None, _) => return Err(CliError::Missmatch("No match for this name".to_string())),
+                  (Some(_), Some(_)) => return Err(CliError::Missmatch("At least two matches for this name, please provide escapade_id instead".to_string())),
+              }
+          }
+            _ => return Err(
+              CliError::HttpError(response.status(), "Error in fetching escapade list.".to_string())),
+          }
+        },
+    };
+    
+      // Get response
+      let response = client
+          .get(format!("http://{}:{}/escapades/{}/heartbeats", config.server_info.address, config.server_info.port, escapade_id))
+          .header(header::AUTHORIZATION, format!("Bearer {}", user.token))
+          .send()
+          .await?;
+
+      let list: Vec<Heartbeat> = response.json().await?;
+
+      for heartbeat in list {
+        dbg!(heartbeat);
+      };
+
+      Ok(())
+
+    } else {
+      Err(CliError::UncompleteConfig)
+    }
+  
+}
+

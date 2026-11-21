@@ -1,11 +1,44 @@
 {
   "db_name": "SQLite",
-  "query": "\n            SELECT latitude, longitude, timestamp, description, picture_id, user_id, escapade_id\n            FROM heartbeats\n            WHERE user_id = ?\n            ORDER BY timestamp DESC\n        ",
+  "query": "\n            SELECT *\n            FROM heartbeats\n            WHERE user_id = ?\n            ORDER BY timestamp DESC\n        ",
   "describe": {
     "columns": [
       {
-        "name": "latitude",
+        "name": "id",
         "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "heartbeats",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "picture_id",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "heartbeats",
+            "name": "picture_id"
+          }
+        }
+      },
+      {
+        "name": "escapade_id",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "heartbeats",
+            "name": "escapade_id"
+          }
+        }
+      },
+      {
+        "name": "latitude",
+        "ordinal": 3,
         "type_info": "Float",
         "origin": {
           "Table": {
@@ -16,7 +49,7 @@
       },
       {
         "name": "longitude",
-        "ordinal": 1,
+        "ordinal": 4,
         "type_info": "Float",
         "origin": {
           "Table": {
@@ -26,19 +59,8 @@
         }
       },
       {
-        "name": "timestamp",
-        "ordinal": 2,
-        "type_info": "Datetime",
-        "origin": {
-          "Table": {
-            "table": "heartbeats",
-            "name": "timestamp"
-          }
-        }
-      },
-      {
         "name": "description",
-        "ordinal": 3,
+        "ordinal": 5,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -48,35 +70,24 @@
         }
       },
       {
-        "name": "picture_id",
-        "ordinal": 4,
-        "type_info": "Text",
+        "name": "timestamp",
+        "ordinal": 6,
+        "type_info": "Datetime",
         "origin": {
           "Table": {
             "table": "heartbeats",
-            "name": "picture_id"
+            "name": "timestamp"
           }
         }
       },
       {
         "name": "user_id",
-        "ordinal": 5,
+        "ordinal": 7,
         "type_info": "Integer",
         "origin": {
           "Table": {
             "table": "heartbeats",
             "name": "user_id"
-          }
-        }
-      },
-      {
-        "name": "escapade_id",
-        "ordinal": 6,
-        "type_info": "Integer",
-        "origin": {
-          "Table": {
-            "table": "heartbeats",
-            "name": "escapade_id"
           }
         }
       }
@@ -88,11 +99,12 @@
       false,
       false,
       false,
-      true,
       false,
+      false,
+      true,
       false,
       false
     ]
   },
-  "hash": "7deda80cb2625ca5b265990e735c2504440421386775c9c330aa76d71655cf96"
+  "hash": "88491e45a61db27888d3ecc126bbc72f4c1390d2210884a06fe6303b237edf49"
 }

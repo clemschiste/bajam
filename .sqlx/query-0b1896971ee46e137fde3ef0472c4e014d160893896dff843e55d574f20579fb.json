@@ -1,0 +1,110 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT *\n                FROM heartbeats\n                ORDER BY timestamp DESC\n                LIMIT 100 OFFSET 1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "heartbeats",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "picture_id",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "heartbeats",
+            "name": "picture_id"
+          }
+        }
+      },
+      {
+        "name": "escapade_id",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "heartbeats",
+            "name": "escapade_id"
+          }
+        }
+      },
+      {
+        "name": "latitude",
+        "ordinal": 3,
+        "type_info": "Float",
+        "origin": {
+          "Table": {
+            "table": "heartbeats",
+            "name": "latitude"
+          }
+        }
+      },
+      {
+        "name": "longitude",
+        "ordinal": 4,
+        "type_info": "Float",
+        "origin": {
+          "Table": {
+            "table": "heartbeats",
+            "name": "longitude"
+          }
+        }
+      },
+      {
+        "name": "description",
+        "ordinal": 5,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "heartbeats",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "name": "timestamp",
+        "ordinal": 6,
+        "type_info": "Datetime",
+        "origin": {
+          "Table": {
+            "table": "heartbeats",
+            "name": "timestamp"
+          }
+        }
+      },
+      {
+        "name": "user_id",
+        "ordinal": 7,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "heartbeats",
+            "name": "user_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "0b1896971ee46e137fde3ef0472c4e014d160893896dff843e55d574f20579fb"
+}

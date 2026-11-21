@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 use commands::{Connection, Credentials};
 use std::str::FromStr;
 
-use crate::commands::heartbeat::create_heartbeat;
+use crate::commands::heartbeat::*;
 use crate::commands::server::set_server;
 use crate::commands::register::*;
 use crate::commands::login::*;
@@ -52,14 +52,9 @@ enum SubEscapades {
     Create(EscapadeArgs),
     // Delete an escapade (you must be admin of the escapade)
     Delete,
+    // Shows heartbeat within escapade
+    Show,
 }
-
-#[derive(Subcommand)]
-enum SubHeartbeat {
-    Create(HeartbeatArgs),
-    Show(HeartbeatArgs),
-}
-
 #[derive(clap::Args)]
 pub struct EscapadeArgs {
     pub name: String,
@@ -76,6 +71,13 @@ impl EscapadeArgs {
     }
 }
 
+
+#[derive(Subcommand)]
+enum SubHeartbeat {
+    Create(HeartbeatArgs),
+    Show(HeartbeatArgs),
+    List(HeartbeatListArgs),
+}
 #[derive(clap::Args)]
 pub struct HeartbeatArgs {
     pub escinput: EscInput,
@@ -84,13 +86,18 @@ pub struct HeartbeatArgs {
     pub description: Option<String>,
 }
 
+#[derive(clap::Args)]
+pub struct HeartbeatListArgs {
+    pub escinput: EscInput,
+}
+
 impl HeartbeatArgs {
     /// Checks if the latitude and longitude are within expected range of -90.0 - 90.0
     fn valid_latitude(&self) -> Result<bool, CliError> {
-        if self.latitude <= 90.0
-            && self.longitude <= 90.0
-            && self.latitude >= -90.0
-            && self.longitude >= -90.0
+        if self.latitude <= 180.0
+            && self.longitude <= 180.0
+            && self.latitude >= -180.0
+            && self.longitude >= -180.0
         {
             Ok(true)
         } else {
@@ -148,6 +155,7 @@ async fn main() -> anyhow::Result<()> {
                         (create_escapade(args.name)).await?
                     }
                 }
+                SubEscapades::Show => (),
                 SubEscapades::Delete => (),
             }
         },
@@ -158,6 +166,7 @@ async fn main() -> anyhow::Result<()> {
                         create_heartbeat(args.escinput, args.latitude, args.longitude, args.description).await?;
                     }
                 }
+                SubHeartbeat::List(arg) => { list_heartbeats_from(arg.escinput).await? },
                 SubHeartbeat::Show(_) => (),
             }
         },

@@ -18,7 +18,7 @@ impl AppState {
         let history = sqlx::query_as!(
             Heartbeat,
             r#"
-                SELECT latitude, longitude, timestamp, description, picture_id, user_id, escapade_id
+                SELECT *
                 FROM heartbeats
                 ORDER BY timestamp DESC
                 LIMIT 100 OFFSET 1

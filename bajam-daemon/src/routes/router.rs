@@ -4,6 +4,7 @@ use crate::routes::escapade_delete::*;
 use crate::routes::escapade_list::*;
 use crate::routes::escapade_post::*;
 use crate::routes::heartbeat_delete::*;
+use crate::routes::heartbeat_list::*;
 use crate::routes::heartbeat_post::*;
 use crate::routes::upload::*;
 use crate::routes::user_login::*;
@@ -33,6 +34,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/heartbeats/{heartbeat_id}", delete(heartbeat_delete)) // Delete a heartbeat
         .route("/escapades", post(escapade_post_web)) // Create (and join) a new escapade
         .route("/escapades", get(escapades_list)) // list all escapades of the user
+        .route("/escapades/{escapade_id}/heartbeats", get(heartbeats_list)) // list all escapades of the user
         .route("/upload/{picture_id}", post(post_picture)) // Upload in conjuction with a hb
         .route("/user/logout", delete(session_logout))
         .route("/dashboard", get(dashboard_view)) // Display the dashboard.html template (last heartbeat loaded)

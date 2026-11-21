@@ -1,5 +1,5 @@
 {% for escapade in escapades %}
-    <div class="escapade-item" data-escapade-id="{{ escapade.id }}">
+    <div class="escapade-item" data-escapade-id="{{ escapade.id }}" data-escapade-name="{{ escapade.name }}">
         {{ escapade.name }}
     </div>
 {% endfor %}

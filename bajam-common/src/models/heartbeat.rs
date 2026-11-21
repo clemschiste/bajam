@@ -4,6 +4,7 @@ use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Heartbeat {
+    pub id: i64,
     pub latitude: f64,
     pub longitude: f64,
     pub escapade_id: i64,
@@ -44,10 +45,10 @@ impl HeartbeatPost {
     /// Checks validity regarding the latitude and longitude.
     /// -90.0 + 90.0
     pub fn valid(&self) -> bool {
-        self.latitude <= 90.0
-            && self.longitude <= 90.0
-            && self.latitude >= -90.0
-            && self.longitude >= -90.0
+        self.latitude <= 180.0
+            && self.longitude <= 180.0
+            && self.latitude >= -180.0
+            && self.longitude >= -180.0
     }
 }
 
