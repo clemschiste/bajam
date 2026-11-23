@@ -37,11 +37,12 @@ pub async fn middleware_origin(
 
       dbg!(&extracted_origin);
 
-      if extracted_origin == Some(config.allowed_origin) {
-        Ok(next.run(req).await)
-      } else {
-        Err(StatusCode::FORBIDDEN)
+      for allowed in config.network.allowed_origin {
+        if extracted_origin == Some(allowed) {
+          return Ok(next.run(req).await)
+        } 
       }
+      Err(StatusCode::FORBIDDEN)
     }
   }
 }

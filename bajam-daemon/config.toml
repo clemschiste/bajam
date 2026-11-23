@@ -1,0 +1,13 @@
+[environment]
+environment = "dev"
+
+[database]
+database_path = "./data/app.db"
+
+[network]
+bind_address = "127.0.0.1:3001"
+public_url = "http://localhost:3000"
+allowed_origin = [
+    "http://localhost:3000",
+    "http://127.0.0.1:300",
+]

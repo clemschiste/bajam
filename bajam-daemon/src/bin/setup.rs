@@ -1,16 +1,35 @@
-use std::{env, fs};
+use bajam_daemon::config::{AppConfig, DatabaseConfig, Environment, EnvironmentConfig};
+use std::fs;
+use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 
 // Create a .env file for initialization of main
 fn main() -> anyhow::Result<()> {
-    let db_name = env::args().nth(1).unwrap_or_else(|| "app.db".to_string());
-    if fs::exists(format!("./data/{db_name}"))? {
-        println!(".env already configured");
+    if fs::exists(format!("config.toml"))? {
+        println!("'config.toml' already configured");
     } else {
-        fs::write(
-            ".env",
-            format!("DATABASE_PATH=./data/{db_name}\nDATABASE_URL=sqlite://./data/{db_name}\nBIND_ADDRESS=127.0.0.1:3000\nPUBLIC_URL=http://localhost:3000\nALLOWED_ORIGIN=http://localhost:3000\n"),
-        )?;
-        println!("✓ .env created");
+        let ip = Ipv4Addr::new(127, 0, 0, 1);
+        let addr = SocketAddrV4::new(ip, 3001);
+        let socket_addr = SocketAddr::V4(addr);
+        let config = AppConfig {
+            database: DatabaseConfig {
+                database_path: "./data/app.db".to_string(),
+            },
+            environment: EnvironmentConfig {
+                environment: Environment::Dev,
+            },
+            network: bajam_daemon::config::NetworkConfig {
+                bind_address: socket_addr,
+                public_url: "http://localhost:3000".to_string(),
+                allowed_origin: vec![
+                    "http://localhost:3000".to_string(),
+                    "http://127.0.0.1:300".to_string(),
+                ],
+            },
+        };
+
+        let content = toml::to_string_pretty(&config)?;
+        fs::write("config.toml", content)?;
+        println!("'config.toml' created.");
     }
 
     Ok(())

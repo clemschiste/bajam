@@ -13,7 +13,6 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 tower-http = { workspace = true }
-dotenv = { workspace = true }
 clap = { workspace = true }
 uuid = { workspace = true }
 askama = { workspace = true }
@@ -24,4 +23,5 @@ hex = { workspace = true }
 chrono = { workspace = true }
 tower = { workspace = true }
 url = { workspace = true }
+toml = { workspace = true }
 bajam-common = { path = "../bajam-common" }
