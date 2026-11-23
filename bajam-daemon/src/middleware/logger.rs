@@ -1,7 +1,7 @@
 use axum::{extract::Request, middleware::Next, response::Response};
 use std::time::Instant;
 
-pub async fn logger(req: Request, next: Next) -> Response {
+pub async fn middleware_logger(req: Request, next: Next) -> Response {
     let method = req.method().clone();
     let uri    = req.uri().clone();
     let start  = Instant::now();

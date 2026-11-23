@@ -8,9 +8,22 @@ use bajam_common::models::session::Session;
 use crate::state::AppState;
 use crate::db::session_queries::sql_delete_user_session;
 
-enum AuthCredentials {
+#[derive(Debug, Clone)]
+pub struct AuthContext {
+    pub user_id: i64,
+    pub auth_method: AuthMethod
+}
+
+#[derive(Debug, Clone)]
+pub enum AuthCredentials {
     Bearer(String),
     SessionCookie(String),
+}
+
+#[derive(Debug, Clone)]
+pub enum AuthMethod {
+    Bearer,
+    Cookie,
 }
 
 #[allow(unused)]
@@ -58,11 +71,16 @@ impl IntoResponse for AuthError {
     }
 }
 
-pub async fn auth(State(state): State<AppState>, mut req: Request, next: Next) -> Result<Response, AuthError> {
+pub async fn middleware_auth(State(state): State<AppState>, mut req: Request, next: Next) -> Result<Response, AuthError> {
     let path = req.uri().path().to_string();
     let credentials = match extract_credential(req.headers()) {
         Ok(credentials) => credentials,
         Err(_) => return Ok(Redirect::to("/login").into_response()),
+    };
+
+    let auth_method = match credentials {
+        AuthCredentials::Bearer(_) => AuthMethod::Bearer,
+        AuthCredentials::SessionCookie(_) => AuthMethod::Cookie,
     };
 
     // Check that the session exists in db. On none variant redirect to /login
@@ -82,7 +100,11 @@ pub async fn auth(State(state): State<AppState>, mut req: Request, next: Next) -
         return Ok(Redirect::to("/login").into_response())
     }
 
-    req.extensions_mut().insert(session.user_id);
+    req.extensions_mut().insert(
+        AuthContext {
+            user_id: session.user_id,
+            auth_method,
+    });
 
     // Redirect to dashboard if the session is all valid
     if path == "/" {

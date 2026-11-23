@@ -2,38 +2,59 @@ use anyhow::Context;
 use clap::Parser;
 use std::env;
 
-pub fn get_config_from_args() -> anyhow::Result<Config> {
-    let args = Args::parse();
-    let config = Config::from_args(&args)?;
+pub fn get_config() -> anyhow::Result<AppConfig> {
+    // let _args = Args::parse();
+    let config = AppConfig::from_env()?;
 
     Ok(config)
 }
 
 #[derive(Parser, Debug)]
 pub struct Args {
-    /// Use TCP_TAILNET instead of TCP_LOCAL (if existing)
     #[arg(long)]
-    pub tailnet: bool,
+    pub mode: Mode,
 }
 
-pub struct Config {
-    pub tcp_addr: String,
+#[derive(Clone, Copy, Debug, clap::ValueEnum)]
+pub enum Mode {
+    Dev,
+    Prod,
 }
 
-impl Config {
-    pub fn from_args(args: &Args) -> anyhow::Result<Self> {
-        if args.tailnet {
-            Ok(
-                Self {
-                    tcp_addr: env::var("TCP_TAILNET").context("TCP_TAILNET is not configured in the environment file yet. You must define it.")?
-                }
-            )
-        } else {
-            Ok(
-                Self {
-                    tcp_addr: env::var("TCP_LOCAL").context("TCP_LOCAL is not configured anymore in the environment file. You must define it")?
-                }
-            )
+#[derive(Clone, Debug)]
+pub struct AppConfig {
+    pub bind_address: String,
+    pub allowed_origin: String, // maybe a vec later with a toml config instead of env
+    pub public_url: String,
+    pub database_path: String,
+    pub database_url: String,
+}
+
+impl AppConfig {
+    pub fn from_env() -> anyhow::Result<Self> {
+        Ok(Self {
+            bind_address: env::var("BIND_ADDRESS")
+                .context("BIND_ADDRESS is not configured in .env file.")?,
+            allowed_origin: env::var("ALLOWED_ORIGIN")
+                .context("ALLOWED_ORIGIN not defined in .env file.")?,
+            public_url: env::var("PUBLIC_URL")
+                .context("PUBLIC_ADRESS not defined in .env file.")?,
+            database_path: env::var("DATABASE_PATH")
+                .context("DATABASE_PATH not defined in .env file.")?,
+            database_url: env::var("DATABASE_URL")
+                .context("DATABASE_URL not defined in .env file.")?,
+        })
+    }
+
+    #[allow(unused)]
+    /// For testing use
+    pub fn empty() -> AppConfig {
+        AppConfig {
+            bind_address: "".to_string(),
+            allowed_origin: "".to_string(),
+            public_url: "".to_string(),
+            database_path: "".to_string(),
+            database_url: "".to_string(),
         }
     }
 }

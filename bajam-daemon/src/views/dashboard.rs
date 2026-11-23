@@ -7,6 +7,7 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use crate::db::escapade_queries::sql_list_escapades;
 use crate::db::user_queries::sql_username_from_id;
+use crate::middleware::auth::AuthContext;
 use crate::state::AppState;
 
 use bajam_common::models::heartbeat::Heartbeat;
@@ -15,9 +16,9 @@ use bajam_common::models::heartbeat::Heartbeat;
 // based on the last heartbeat on the database
 pub async fn dashboard_view(
     State(state): State<AppState>,
-    Extension(user_id): Extension<i64>
+    Extension(auth_context): Extension<AuthContext>
 ) -> Result<Html<String>, (StatusCode, String)> {
-    let username = sql_username_from_id(&state, &user_id).await?;
+    let username = sql_username_from_id(&state, &auth_context.user_id).await?;
 
     // Database query, guetting the last timestamped row
     // If empty return an empty row error.
@@ -30,7 +31,7 @@ pub async fn dashboard_view(
             ORDER BY timestamp DESC
             LIMIT 1
         "#,
-        user_id
+        auth_context.user_id
     )
     .fetch_optional(&state.db)
     .await
@@ -42,7 +43,7 @@ pub async fn dashboard_view(
         )
     })?;
 
-    let escapades = sql_list_escapades(&state, &user_id).await?;
+    let escapades = sql_list_escapades(&state, &auth_context.user_id).await?;
 
     // Tous les heartbeats de l'utilisateur, pour le survol carte par escapade
     let user_heartbeats = sqlx::query_as!(
@@ -53,7 +54,7 @@ pub async fn dashboard_view(
             WHERE user_id = ?
             ORDER BY timestamp DESC
         "#,
-        user_id
+        auth_context.user_id
     )
     .fetch_all(&state.db)
     .await

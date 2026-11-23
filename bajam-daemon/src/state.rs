@@ -6,11 +6,12 @@ use bajam_common::models::heartbeat::Heartbeat;
 pub struct AppState {
     pub db: SqlitePool,
     pub history: Vec<Heartbeat>,
+    pub config: AppConfig,
 }
 
 // A voir si je souhaite tracer la ligne. Probablement pas maintenant mais il faudrait retourner dans le bon ordre
 impl AppState {
-    pub async fn new(db: SqlitePool) -> Result<Self, sqlx::Error> {
+    pub async fn new(db: SqlitePool, config: AppConfig) -> Result<Self, sqlx::Error> {
         // Le problème quand tu relance le server, il intègre la "current pos" dans l'history
         print!("Loading history... ");
 
@@ -32,12 +33,15 @@ impl AppState {
         Ok(Self {
             db,
             history,
+            config
         })
 
     }
 }
 
 use std::{fs::OpenOptions, path::Path};
+
+use crate::config::AppConfig;
 
 pub async fn db_connect(path: &str) -> Result<Pool<Sqlite>, sqlx::Error> {
     // Check if path exists

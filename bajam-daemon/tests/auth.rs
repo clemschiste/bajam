@@ -1,4 +1,5 @@
 use axum::http::StatusCode;
+use bajam_daemon::config::AppConfig;
 use bajam_daemon::state::AppState;
 use bajam_daemon::routes::router::create_router;
 
@@ -10,7 +11,8 @@ use common::*;
 // Scenario create user, login, logout
 pub async fn login_logout() {
     let db = test_db().await;
-    let test_state = AppState::new(db).await;
+    let config = AppConfig::empty();
+    let test_state = AppState::new(db, config).await;
     let test_router = create_router(test_state.unwrap());
 
     let register_response = test_register_user("user", "secret", test_router.clone()).await;
@@ -28,7 +30,8 @@ pub async fn login_logout() {
 // Scenario create user, wrong login
 pub async fn register_and_wrong_login() {
     let db = test_db().await;
-    let test_state = AppState::new(db).await;
+    let config = AppConfig::empty();
+    let test_state = AppState::new(db, config).await;
     let test_router = create_router(test_state.unwrap());
 
     let register_response = test_register_user("user", "secret", test_router.clone()).await;

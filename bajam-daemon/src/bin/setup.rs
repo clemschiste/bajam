@@ -8,7 +8,7 @@ fn main() -> anyhow::Result<()> {
     } else {
         fs::write(
             ".env",
-            format!("DATABASE_PATH=./data/{db_name}\nDATABASE_URL=sqlite://./data/{db_name}\nTCP_LOCAL=127.0.0.1:3000\n"),
+            format!("DATABASE_PATH=./data/{db_name}\nDATABASE_URL=sqlite://./data/{db_name}\nBIND_ADDRESS=127.0.0.1:3000\nPUBLIC_URL=http://localhost:3000\nALLOWED_ORIGIN=http://localhost:3000\n"),
         )?;
         println!("✓ .env created");
     }

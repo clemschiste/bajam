@@ -1,5 +1,6 @@
 use crate::middleware::auth::*;
 use crate::middleware::logger::*;
+use crate::middleware::origin::middleware_origin;
 use crate::routes::escapade_delete::*;
 use crate::routes::escapade_list::*;
 use crate::routes::escapade_post::*;
@@ -39,11 +40,12 @@ pub fn create_router(state: AppState) -> Router {
         .route("/user/logout", delete(session_logout))
         .route("/dashboard", get(dashboard_view)) // Display the dashboard.html template (last heartbeat loaded)
         .route("/", get(|| async {})) // redirect either to dashboard or login (see auth middleware)
-        .layer(from_fn_with_state(state.clone(), auth)); // auth middleware
+        .layer(from_fn_with_state(state.clone(), middleware_origin)) // origin middleware
+        .layer(from_fn_with_state(state.clone(), middleware_auth)); // auth middleware
 
     // Full router
     Router::new()
-        .route("/user/new", post(register)) // Create a new user
+        .route("/register", post(register)) // Create a new user
         .route("/api/login", post(login_api)) // login via json
         .route("/login", post(login_web)) // login via form
         .route("/login", get(login_view)) // Verif + token to user
@@ -51,6 +53,6 @@ pub fn create_router(state: AppState) -> Router {
         .merge(protected_routes)
         .nest_service("/static", ServeDir::new("static"))
         .layer(DefaultBodyLimit::max(20 * 1024 * 1024))
-        .layer(from_fn(logger))
+        .layer(from_fn(middleware_logger))
         .with_state(state)
 }

@@ -23,4 +23,5 @@ sha2 = { workspace = true }
 hex = { workspace = true }
 chrono = { workspace = true }
 tower = { workspace = true }
+url = { workspace = true }
 bajam-common = { path = "../bajam-common" }

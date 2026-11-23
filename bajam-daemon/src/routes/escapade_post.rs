@@ -8,6 +8,7 @@ use sqlx::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::db::escapade_queries::sql_list_escapades;
+use crate::middleware::auth::AuthContext;
 use crate::state::AppState;
 
 // Maybe add description later ?
@@ -30,23 +31,23 @@ pub struct EscapadesListTemplate {
 // We must insert the user_id + escapade_id in the second
 pub async fn escapade_post_api(
   State(state): State<AppState>,
-  Extension(user_id): Extension<i64>,
+  Extension(auth_context): Extension<AuthContext>,
   Json(payload): Json<EscapadePost>,
 ) -> Result<Json<EscapadeResponse>, (StatusCode, String)> {
 
-    let escapade_response = escapade_post_tx(&state, user_id, payload.name).await?;
+    let escapade_response = escapade_post_tx(&state, auth_context.user_id, payload.name).await?;
 
     Ok(Json(escapade_response))
 }
 
 pub async fn escapade_post_web(
   State(state): State<AppState>,
-  Extension(user_id): Extension<i64>,
+  Extension(auth_context): Extension<AuthContext>,
   Form(payload): Form<EscapadePost>,
 ) -> Result<Html<String>, (StatusCode, String)> {
 
-    escapade_post_tx(&state, user_id, payload.name).await?;
-    let escapade_list = sql_list_escapades(&state, &user_id).await?;
+    escapade_post_tx(&state, auth_context.user_id, payload.name).await?;
+    let escapade_list = sql_list_escapades(&state, &auth_context.user_id).await?;
 
     let template = EscapadesListTemplate { escapades: escapade_list };
     let html = template.render().map_err(|e| {

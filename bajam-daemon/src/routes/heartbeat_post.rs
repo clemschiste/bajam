@@ -2,13 +2,13 @@ use axum::{Extension, Json, extract::{State, Path}};
 use axum::http::StatusCode;
 use sqlx::Result;
 use uuid::Uuid;
-use crate::state::AppState;
+use crate::{middleware::auth::AuthContext, state::AppState};
 use bajam_common::models::heartbeat::{HeartbeatPost, ImageHandle};
 
 pub async fn heartbeat_post(
     State(state): State<AppState>,
     Path(escapade_id): Path<i64>, // Plus joli si c'est le name
-    Extension(user_id): Extension<i64>, // User id obtenu avec le auth middleware
+    Extension(auth_context): Extension<AuthContext>, // User id obtenu avec le auth middleware
     Json(payload): Json<HeartbeatPost>,
 ) -> Result<Json<ImageHandle>, (StatusCode, String)> {
 
@@ -41,10 +41,10 @@ pub async fn heartbeat_post(
     .bind(payload.longitude)
     .bind(payload.description)
     .bind(picture_id.to_string())
-    .bind(user_id)
+    .bind(auth_context.user_id)
     .bind(escapade_id)
     .bind(escapade_id)
-    .bind(user_id)
+    .bind(auth_context.user_id)
     .execute(&state.db)
     .await
     .map_err(|e| {

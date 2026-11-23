@@ -6,7 +6,7 @@ use sqlx::{
     SqlitePool,
 };
 use tower::ServiceExt;
-use bajam_daemon::state::AppState;
+use bajam_daemon::{config::{AppConfig, get_config}, state::AppState};
 use bajam_daemon::routes::router::create_router;
 use bajam_common::models::session::LoginResponse;
 
@@ -21,7 +21,8 @@ pub struct TestSession {
 #[allow(unused)]
 pub async fn test_init_with_user(username: &str, password: &str) -> TestSession {
     let db = test_db().await;
-    let test_state = AppState::new(db).await;
+    let config = AppConfig::empty();
+    let test_state = AppState::new(db, config).await;
     let test_router = create_router(test_state.unwrap());
     test_register_user(username, password, test_router.clone()).await;
     let response = test_login_user(username, password, test_router.clone()).await;
@@ -40,7 +41,7 @@ pub async fn test_register_user(username: &str, password: &str, router: Router) 
     });
     
     router.oneshot(
-        Request::post("/user/new")
+        Request::post("/register")
         .header("Content-type", "application/json")
         .body(Body::from(register_body.to_string()))
         .unwrap(),
