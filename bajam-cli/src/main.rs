@@ -21,7 +21,11 @@ async fn main() -> anyhow::Result<()> {
         Some(Input::Server(connection)) => set_server(connection).await?,
         Some(Input::Register(credentials)) => register(&credentials).await?,
         Some(Input::Login(credentials)) => login(&credentials).await?,
-        Some(Input::Logout) => logout().await?,
+        Some(Input::Logout { command: opt } ) =>
+            match opt {
+                Some(_) => logout_all_user_sessions().await?,
+                None => logout().await?,
+            },
         Some(Input::Status) => status().await?,
         Some(Input::Escapade{ command: action }) => {
             match action {

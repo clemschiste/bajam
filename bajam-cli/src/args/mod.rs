@@ -22,7 +22,10 @@ pub enum Input {
     /// Login
     Login(Credentials),
     /// Logout
-    Logout,
+    Logout {
+        #[command(subcommand)]
+        command: Option<SubLogout>,
+    },
     /// Show config status
     Status,
     /// Create escapade
@@ -35,4 +38,10 @@ pub enum Input {
         #[command(subcommand)]
         command: SubHeartbeat,
     },
+}
+
+#[derive(Subcommand)]
+pub enum SubLogout {
+    /// Delete all sessions (including on other devices)
+    All,
 }

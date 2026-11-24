@@ -1,16 +1,16 @@
 {
   "db_name": "SQLite",
-  "query": "\n          SELECT token_hash, user_id, expires_at\n          FROM sessions\n          WHERE token_hash = $1\n        ",
+  "query": "\n          SELECT id, user_id, token_hash, expires_at\n          FROM sessions\n          WHERE token_hash = $1\n        ",
   "describe": {
     "columns": [
       {
-        "name": "token_hash",
+        "name": "id",
         "ordinal": 0,
-        "type_info": "Text",
+        "type_info": "Integer",
         "origin": {
           "Table": {
             "table": "sessions",
-            "name": "token_hash"
+            "name": "id"
           }
         }
       },
@@ -26,8 +26,19 @@
         }
       },
       {
-        "name": "expires_at",
+        "name": "token_hash",
         "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "token_hash"
+          }
+        }
+      },
+      {
+        "name": "expires_at",
+        "ordinal": 3,
         "type_info": "Datetime",
         "origin": {
           "Table": {
@@ -43,8 +54,9 @@
     "nullable": [
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "8a52f73fb7403ad1528e0bc07ed8f20b04e3aebb5b8f03c22fac197fd8576883"
+  "hash": "eade7b20d98a60a30a78ec74bae957119abd6cd9e27e2a79f71c36e3c86ba0a1"
 }

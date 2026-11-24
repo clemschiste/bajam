@@ -11,6 +11,7 @@ use crate::db::session_queries::sql_delete_user_session;
 #[derive(Debug, Clone)]
 pub struct AuthContext {
     pub user_id: i64,
+    pub session_id: i64,
     pub auth_method: AuthMethod
 }
 
@@ -75,7 +76,7 @@ pub async fn middleware_auth(State(state): State<AppState>, mut req: Request, ne
     let path = req.uri().path().to_string();
     let credentials = match extract_credential(req.headers()) {
         Ok(credentials) => credentials,
-        Err(_) => return Ok(Redirect::to("/login").into_response()),
+        Err(e) => {eprintln!("{:?}", e); return Ok(Redirect::to("/login").into_response())},
     };
 
     let auth_method = match credentials {
@@ -96,13 +97,14 @@ pub async fn middleware_auth(State(state): State<AppState>, mut req: Request, ne
 
     // Check that the session is valid timewise or delete it
     if session.expires_at < chrono::Utc::now().naive_utc() {
-        sql_delete_user_session(&state, &session.user_id).await.map_err(|_| AuthError::DatabaseError)?;
+        sql_delete_user_session(&state, &session.user_id, &session.id).await.map_err(|_| AuthError::DatabaseError)?;
         return Ok(Redirect::to("/login").into_response())
     }
 
     req.extensions_mut().insert(
         AuthContext {
             user_id: session.user_id,
+            session_id: session.id,
             auth_method,
     });
 
@@ -110,7 +112,6 @@ pub async fn middleware_auth(State(state): State<AppState>, mut req: Request, ne
     if path == "/" {
         return Ok(Redirect::to("/dashboard").into_response());
     }
-    
     Ok(next.run(req).await)
 }
 
@@ -159,7 +160,7 @@ pub async fn fetch_opt_session(state: &AppState, hash: String) -> Result<Option<
     let session_opt = sqlx::query_as!(
         Session,
         r#"
-          SELECT token_hash, user_id, expires_at
+          SELECT id, user_id, token_hash, expires_at
           FROM sessions
           WHERE token_hash = $1
         "#, hash
