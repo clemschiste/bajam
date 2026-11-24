@@ -14,6 +14,7 @@ use crate::routes::user_register::*;
 use crate::state::AppState;
 use crate::views::dashboard::*;
 use crate::views::login::*;
+use crate::views::register::*;
 use axum::extract::DefaultBodyLimit;
 use axum::middleware::{from_fn, from_fn_with_state};
 use axum::routing::delete;
@@ -32,12 +33,13 @@ pub fn create_router(state: AppState) -> Router {
         ) // Create a new heartbeat
         .route("/api/escapades", post(escapade_post_api)) // Create (and join) a new escapade
         .route("/api/escapades/{escapade_id}", delete(escapade_delete)) // Delete an escapade (with cascade)
+        .route("/api/logout", delete(session_logout))
         .route("/heartbeats/{heartbeat_id}", delete(heartbeat_delete)) // Delete a heartbeat
         .route("/escapades", post(escapade_post_web)) // Create (and join) a new escapade
         .route("/escapades", get(escapades_list)) // list all escapades of the user
         .route("/escapades/{escapade_id}/heartbeats", get(heartbeats_list)) // list all escapades of the user
         .route("/upload/{picture_id}", post(post_picture)) // Upload in conjuction with a hb
-        .route("/user/logout", delete(session_logout))
+        .route("/logout", post(session_logout_web))
         .route("/dashboard", get(dashboard_view)) // Display the dashboard.html template (last heartbeat loaded)
         .route("/", get(|| async {})) // redirect either to dashboard or login (see auth middleware)
         .layer(from_fn_with_state(state.clone(), middleware_origin)) // origin middleware
@@ -45,9 +47,11 @@ pub fn create_router(state: AppState) -> Router {
 
     // Full router
     Router::new()
-        .route("/register", post(register)) // Create a new user
+        .route("/api/register", post(register)) // Create a new user
         .route("/api/login", post(login_api)) // login via json
-        .route("/login", post(login_web)) // login via form
+        .route("/register", post(register_web)) // register via form view html
+        .route("/register", get(register_view)) // register via form view html
+        .route("/login", post(login_web)) // login via form view
         .route("/login", get(login_view)) // Verif + token to user
         .route("/image/{picture_id}", get(get_picture))
         .merge(protected_routes)

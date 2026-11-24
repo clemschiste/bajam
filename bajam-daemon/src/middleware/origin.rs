@@ -35,8 +35,6 @@ pub async fn middleware_origin(
         None => return Err(StatusCode::FORBIDDEN)
       };
 
-      dbg!(&extracted_origin);
-
       for allowed in config.network.allowed_origin {
         if extracted_origin == Some(allowed) {
           return Ok(next.run(req).await)
@@ -53,6 +51,6 @@ fn extract_origin(value: &str) -> Option<String> {
     Some(format!(
         "{}://{}",
         url.scheme(),
-        url[url::Position::BeforeHost..url::Position::AfterPort].to_string()
+        &url[url::Position::BeforeHost..url::Position::AfterPort]
     ))
 }

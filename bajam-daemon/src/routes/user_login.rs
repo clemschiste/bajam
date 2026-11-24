@@ -10,11 +10,10 @@ use uuid::Uuid;
 use sha2::{Sha256, Digest};
 use chrono::{Duration, Utc};
 use bajam_common::models::session::{LoginResponse};
+use bajam_common::models::user::User;
 
 use crate::routes::user_register::UserPost;
 use crate::state::AppState;
-
-use bajam_common::models::user::User;
 
 // Here we want to check if the username/passord input is valid
 // Then handle a UUid token that we sha256 hash in the db
@@ -59,7 +58,8 @@ pub async fn login_api(
 
 type Token = String;
 
-async fn authenticate(state: &AppState, username: String, password: String) -> Result<Token, (StatusCode, String)> {
+/// Authenticate checks for credentials and then creates a new session with a token returned (if no valid session)
+pub async fn authenticate(state: &AppState, username: String, password: String) -> Result<Token, (StatusCode, String)> {
     let user_opt = sqlx::query_as!(
         User,
         "SELECT * FROM users WHERE username = $1",

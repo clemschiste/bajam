@@ -193,7 +193,12 @@
 
 <body>
 
-    <h2>Welcome {{ username }}</h2>
+    <div class="topbar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h2 style="margin:0;">Welcome {{ username }}</h2>
+        <form action="/logout" method="POST" style="margin:0;">
+            <button type="submit">Logout</button>
+        </form>
+    </div>
 
     <!-- Escapades -->
     <form

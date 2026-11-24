@@ -25,9 +25,10 @@ async fn main() -> anyhow::Result<()> {
     let app = create_router(state);
 
     // Listening adress
+
     let bind_adress = &config.network.bind_address;
     let listener = tokio::net::TcpListener::bind(bind_adress).await?;
-    println!("Serveur available at: {:?}", &config.network.allowed_origin);
+    println!("Serveur available at: {:?}", config.network.allowed_origin);
 
     axum::serve(listener, app).await?;
 

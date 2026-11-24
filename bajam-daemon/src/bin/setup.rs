@@ -4,11 +4,11 @@ use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 
 // Create a .env file for initialization of main
 fn main() -> anyhow::Result<()> {
-    if fs::exists(format!("config.toml"))? {
+    if fs::exists("config.toml")? {
         println!("'config.toml' already configured");
     } else {
         let ip = Ipv4Addr::new(127, 0, 0, 1);
-        let addr = SocketAddrV4::new(ip, 3001);
+        let addr = SocketAddrV4::new(ip, 3000);
         let socket_addr = SocketAddr::V4(addr);
         let config = AppConfig {
             database: DatabaseConfig {
@@ -22,7 +22,7 @@ fn main() -> anyhow::Result<()> {
                 public_url: "http://localhost:3000".to_string(),
                 allowed_origin: vec![
                     "http://localhost:3000".to_string(),
-                    "http://127.0.0.1:300".to_string(),
+                    "http://127.0.0.1:3000".to_string(),
                 ],
             },
         };

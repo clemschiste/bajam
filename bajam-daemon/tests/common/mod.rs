@@ -6,7 +6,7 @@ use sqlx::{
     SqlitePool,
 };
 use tower::ServiceExt;
-use bajam_daemon::{config::{AppConfig, get_config}, state::AppState};
+use bajam_daemon::{config::AppConfig, state::AppState};
 use bajam_daemon::routes::router::create_router;
 use bajam_common::models::session::LoginResponse;
 
@@ -41,7 +41,7 @@ pub async fn test_register_user(username: &str, password: &str, router: Router) 
     });
     
     router.oneshot(
-        Request::post("/register")
+        Request::post("/api/register")
         .header("Content-type", "application/json")
         .body(Body::from(register_body.to_string()))
         .unwrap(),
@@ -79,7 +79,7 @@ pub async fn test_extract_token_on_login(login_response: Response<Body>) -> Stri
 // Test function for logging out a user, output the response
 pub async fn test_logout_user(token: &str, router: Router) -> Response<Body> {
     router.oneshot(
-        Request::delete("/user/logout")
+        Request::delete("/api/logout")
         .header("Authorization", format!("Bearer {}", token))
         .body(Body::empty())
         .unwrap(),
