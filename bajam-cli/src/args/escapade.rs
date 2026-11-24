@@ -21,7 +21,7 @@ pub struct EscapadeArgs {
 impl EscapadeArgs {
     /// Checks if the name is not empty
     pub fn valid_name(&self) -> Result<bool, CliError> {
-        if self.name.is_empty() {
+        if !self.name.is_empty() {
             Ok(true)
         } else {
             Err(CliError::InvalidInput(
