@@ -79,7 +79,7 @@ pub async fn test_extract_token_on_login(login_response: Response<Body>) -> Stri
 // Test function for logging out a user, output the response
 pub async fn test_logout_user(token: &str, router: Router) -> Response<Body> {
     router.oneshot(
-        Request::delete("/api/logout")
+        Request::post("/api/logout")
         .header("Authorization", format!("Bearer {}", token))
         .body(Body::empty())
         .unwrap(),
