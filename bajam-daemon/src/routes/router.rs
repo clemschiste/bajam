@@ -35,6 +35,8 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/escapades/{escapade_id}", delete(escapade_delete)) // Delete an escapade (with cascade)
         .route("/api/logout", post(session_logout))
         .route("/api/logout/all", post(session_logout_all_user_sessions))
+        .route("/escapades/{escapade_id}/heartbeat", post(heartbeat_post)) // Create a new heartbeat
+        .route("/escapades/{escapade_id}", delete(escapade_delete)) // Delete an escapade (with cascade)
         .route("/heartbeats/{heartbeat_id}", delete(heartbeat_delete)) // Delete a heartbeat
         .route("/escapades", post(escapade_post_web)) // Create (and join) a new escapade
         .route("/escapades", get(escapades_list)) // list all escapades of the user

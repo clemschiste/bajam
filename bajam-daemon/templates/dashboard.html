@@ -47,6 +47,52 @@
             padding: 5px;
         }
 
+        #escapade-edit-mode.active {
+            background: #0066ff;
+            color: #ffffff;
+            border-color: #0066ff;
+        }
+
+        .escapade-action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .escapade-edit-mode-btn {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            background: #ffffff;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .escapade-edit-mode-btn.active {
+            background: #0066ff;
+            color: #ffffff;
+            border-color: #0066ff;
+        }
+
+        .escapade-delete-btn {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            border: 1px solid #dc2626;
+            border-radius: 4px;
+            background: #fee2e2;
+            color: #dc2626;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .escapade-delete-btn:hover {
+            background: #dc2626;
+            color: #ffffff;
+        }
+
         .map-popup-image {
             display: block;
             width: 250px;
@@ -145,6 +191,7 @@
             font-size: 1.25rem;
             color: #111;
             border-bottom: 1px solid #e5e7eb;
+            text-align: center;
         }
 
         #escapade-detail-list {
@@ -261,9 +308,34 @@
 
     <!-- Panneau latéral des heartbeats d'une escapade -->
     <div id="escapade-detail-panel">
-        <button id="escapade-detail-close" aria-label="Fermer">✕</button>
+        <button id="escapade-detail-close" aria-label="Close">✕</button>
         <h3 id="escapade-detail-title"></h3>
+        <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+            <button id="escapade-edit-mode" class="escapade-edit-mode-btn">Edit mode</button>
+            <button id="escapade-delete-btn" class="escapade-delete-btn">Delete escapade</button>
+        </div>
         <div id="escapade-detail-list"></div>
+
+        <!-- Formulaire de création de heartbeat -->
+        <div id="escapade-create-form" style="display: none; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+            <h4 style="margin: 0 0 0.75rem 0; font-size: 0.95rem; color: #111;">New heartbeat</h4>
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                <label style="font-size: 0.8rem; color: #4b5563;">Lat</label>
+                <input type="number" id="create-lat" step="any" placeholder="Latitude" style="flex: 1; padding: 0.4rem; font-size: 0.85rem; border: 1px solid #d1d5db; border-radius: 4px;" readonly />
+            </div>
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                <label style="font-size: 0.8rem; color: #4b5563;">Lng</label>
+                <input type="number" id="create-lng" step="any" placeholder="Longitude" style="flex: 1; padding: 0.4rem; font-size: 0.85rem; border: 1px solid #d1d5db; border-radius: 4px;" readonly />
+            </div>
+            <div style="margin-bottom: 0.75rem;">
+                <label style="display: block; font-size: 0.8rem; color: #4b5563; margin-bottom: 0.25rem;">Description</label>
+                <textarea id="create-desc" rows="2" placeholder="Description (optional)" style="width: 100%; padding: 0.4rem; font-size: 0.85rem; border: 1px solid #d1d5db; border-radius: 4px; resize: vertical;"></textarea>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button id="create-cancel" style="flex: 1; padding: 0.5rem; font-size: 0.85rem; border: 1px solid #d1d5db; border-radius: 4px; background: #f9fafb; cursor: pointer;">Cancel</button>
+                <button id="create-submit" style="flex: 1; padding: 0.5rem; font-size: 0.85rem; border: none; border-radius: 4px; background: #0066ff; color: white; cursor: pointer;">Create</button>
+            </div>
+        </div>
     </div>
 
 <script type="module">
@@ -389,12 +461,13 @@
                 beat.latitude
             ];
 
-            new maplibregl.Marker({
+            const marker = new maplibregl.Marker({
                 color: "#888888",
             })
                 .setLngLat(position)
                 .setPopup(createPopup(beat))
                 .addTo(map);
+            historyMarkers.set(beat.id, marker);
         }
 
 
@@ -440,6 +513,7 @@
 
     let hoverMarkers = [];
     let beatMarkers = new Map();
+    let historyMarkers = new Map();
     let trajectorySourceId = null;
     let trajectoryLayerId = null;
 
@@ -572,6 +646,52 @@
         }
     }
 
+    // Retirer un marqueur de la carte (quel que soit son type : historique, escapade ou hover)
+    function removeMarkerFromMap(beatId) {
+        // 1. Marqueur gris de l'historique
+        const historyMarker = historyMarkers.get(beatId);
+        if (historyMarker) {
+            historyMarker.remove();
+            historyMarkers.delete(beatId);
+        }
+
+        // 2. Marqueur bleu de l'escapade sélectionnée (stocké dans beatMarkers)
+        const stored = beatMarkers.get(beatId);
+        if (stored) {
+            stored.marker.remove();
+            beatMarkers.delete(beatId);
+        }
+
+        // 3. Retirer du tableau hoverMarkers si présent
+        for (let i = hoverMarkers.length - 1; i >= 0; i--) {
+            const m = hoverMarkers[i];
+            // On compare les positions pour identifier le marqueur à retirer
+            if (m) {
+                const pos = m.getLngLat();
+                // On ne peut pas comparer directement beatId ici car hoverMarkers ne stocke pas l'id,
+                // mais on retire tous les marqueurs qui correspondent à ce beatId via beatMarkers déjà fait.
+                // Les marqueurs restants dans hoverMarkers qui ne sont plus dans beatMarkers sont orphelins.
+            }
+        }
+        // Nettoyer hoverMarkers des marqueurs qui ne sont plus dans beatMarkers
+        for (let i = hoverMarkers.length - 1; i >= 0; i--) {
+            const m = hoverMarkers[i];
+            if (m) {
+                let stillInBeatMarkers = false;
+                for (const [, storedEntry] of beatMarkers.entries()) {
+                    if (storedEntry.marker === m) {
+                        stillInBeatMarkers = true;
+                        break;
+                    }
+                }
+                if (!stillInBeatMarkers) {
+                    m.remove();
+                    hoverMarkers.splice(i, 1);
+                }
+            }
+        }
+    }
+
     function showGlobalView() {
         clearAllOverlays();
 
@@ -638,6 +758,35 @@
 
                     item.appendChild(ts);
                     item.appendChild(desc);
+
+                    // Delete button for this heartbeat
+                    const deleteBtn = document.createElement("button");
+                    deleteBtn.className = "heartbeat-delete-btn";
+                    deleteBtn.textContent = "🗑";
+                    deleteBtn.title = "Delete heartbeat";
+                    deleteBtn.addEventListener("click", async (ev) => {
+                        ev.stopPropagation();
+                        if (!confirm("Delete this heartbeat?")) {
+                            return;
+                        }
+                        try {
+                            const response = await fetch(`/heartbeats/${beat.id}`, {
+                                method: "DELETE",
+                            });
+                            if (!response.ok) {
+                                throw new Error("Erreur lors de la suppression");
+                            }
+                            item.remove();
+                            removeMarkerFromMap(beat.id);
+                            // If no more heartbeats, show empty message
+                            if (detailList.children.length === 0) {
+                                detailList.innerHTML = `<div class="heartbeat-no-data">Aucun heartbeat pour cette escapade.</div>`;
+                            }
+                        } catch (err) {
+                            alert("Erreur : " + err.message);
+                        }
+                    });
+                    item.appendChild(deleteBtn);
 
                     // Clic sur un heartbeat : recentrer la carte sur sa position
                     item.addEventListener("click", (e) => {
@@ -775,7 +924,7 @@
         if (!selectedItem) {
             return;
         }
-        if (!listEl.contains(event.target) && !detailPanel.contains(event.target)) {
+        if (!editMode && !listEl.contains(event.target) && !detailPanel.contains(event.target)) {
             selectedItem.classList.remove("selected");
             selectedItem = null;
             closeHeartbeatsPanel();
@@ -805,6 +954,250 @@
         const selectedStyle = event.target.value;
 
         map.setStyle(styles[selectedStyle]);
+    });
+
+
+    // --------------------------------------------------
+    // Mode édition : créer un heartbeat en cliquant sur la carte
+    // --------------------------------------------------
+
+    let editMode = false;
+    let pendingLatLng = null; // { lat, lng }
+
+    const createForm = document.getElementById("escapade-create-form");
+    const createLatInput = document.getElementById("create-lat");
+    const createLngInput = document.getElementById("create-lng");
+    const createDescInput = document.getElementById("create-desc");
+    const createCancelBtn = document.getElementById("create-cancel");
+    const createSubmitBtn = document.getElementById("create-submit");
+    const escapadeEditModeBtn = document.getElementById("escapade-edit-mode");
+    const escapadeDeleteBtn = document.getElementById("escapade-delete-btn");
+
+    function toggleEditMode() {
+        if (!selectedItem) {
+            alert("Please select an escapade first from the list.");
+            return;
+        }
+        editMode = !editMode;
+
+        escapadeEditModeBtn.classList.toggle("active", editMode);
+
+        if (editMode) {
+            // Garder le panneau ouvert pour que le bouton Edit mode et le formulaire restent visibles
+            // Ne PAS appeler closeHeartbeatsPanel() ici
+            selectedItem.classList.remove("selected");
+            updateDisplay();
+            map.getCanvas().style.cursor = "crosshair";
+        } else {
+            cancelCreate();
+            map.getCanvas().style.cursor = "";
+        }
+    }
+
+    escapadeDeleteBtn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        if (!selectedItem) {
+            return;
+        }
+        const escapadeId = Number(selectedItem.dataset.escapadeId);
+        if (!confirm("Delete this escapade and all its heartbeats?")) {
+            return;
+        }
+        try {
+            const response = await fetch(`/escapades/${escapadeId}`, {
+                method: "DELETE",
+            });
+            if (!response.ok) {
+                throw new Error("Erreur lors de la suppression");
+            }
+            window.location.reload();
+        } catch (err) {
+            alert("Erreur : " + err.message);
+        }
+    });
+
+    function cancelCreate() {
+        editMode = false;
+        createForm.style.display = "none";
+        pendingLatLng = null;
+        createLatInput.value = "";
+        createLngInput.value = "";
+        createDescInput.value = "";
+        map.getCanvas().style.cursor = "";
+    }
+
+    escapadeEditModeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleEditMode();
+    });
+
+    // Clic sur la carte en mode édition
+    map.on("click", (event) => {
+        if (!editMode || !selectedItem) {
+            return;
+        }
+
+        const lng = event.lngLat.lng;
+        const lat = event.lngLat.lat;
+
+        pendingLatLng = { lat, lng };
+        createLatInput.value = lat.toFixed(6);
+        createLngInput.value = lng.toFixed(6);
+        createDescInput.value = "";
+        createForm.style.display = "block";
+
+        // Empêcher le clic de se propager à d'autres gestionnaires
+        event.originalEvent.stopPropagation();
+    });
+
+    createCancelBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        cancelCreate();
+    });
+
+    createSubmitBtn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+
+        if (!pendingLatLng || !selectedItem) {
+            return;
+        }
+
+        const escapadeId = Number(selectedItem.dataset.escapadeId);
+        const description = createDescInput.value.trim() || undefined;
+
+        try {
+            const response = await fetch(`/escapades/${escapadeId}/heartbeat`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    latitude: pendingLatLng.lat,
+                    longitude: pendingLatLng.lng,
+                    description,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || "Erreur lors de la création");
+            }
+
+            const result = await response.json();
+
+            // Ajouter un marqueur temporaire sur la carte
+            new maplibregl.Marker({ color: "#ff0000" })
+                .setLngLat([pendingLatLng.lng, pendingLatLng.lat])
+                .setPopup(new maplibregl.Popup({ offset: 25 }).setDOMContent(
+                    (() => {
+                        const div = document.createElement("div");
+                        const p = document.createElement("p");
+                        p.textContent = description || "Nouveau heartbeat";
+                        div.appendChild(p);
+                        return div;
+                    })()
+                ))
+                .addTo(map);
+
+            // Recentrer sur le point créé avec un zoom léger
+            map.flyTo({
+                center: [pendingLatLng.lng, pendingLatLng.lat],
+                zoom: 4.5,
+                essential: true,
+                duration: 1000,
+            });
+
+            cancelCreate();
+
+            // Rafraîchir la liste des heartbeats de cette escapade
+            try {
+                const beatsResp = await fetch(`/escapades/${escapadeId}/heartbeats`);
+                if (beatsResp.ok) {
+                    const beats = await beatsResp.json();
+                    detailList.innerHTML = "";
+                    if (beats.length === 0) {
+                        detailList.innerHTML = `<div class="heartbeat-no-data">Aucun heartbeat pour cette escapade.</div>`;
+                    } else {
+                        for (const beat of beats) {
+                            const item = document.createElement("div");
+                            item.className = "heartbeat-item";
+
+                            const ts = document.createElement("div");
+                            ts.className = "heartbeat-timestamp";
+                            ts.textContent = new Date(beat.timestamp).toLocaleString("fr-FR");
+
+                            const desc = document.createElement("div");
+                            desc.className = "heartbeat-description";
+                            desc.textContent = beat.description ?? "Aucune description";
+
+                            item.appendChild(ts);
+                            item.appendChild(desc);
+
+                            // Delete button for this heartbeat
+                            const deleteBtn = document.createElement("button");
+                            deleteBtn.className = "heartbeat-delete-btn";
+                            deleteBtn.textContent = "🗑";
+                            deleteBtn.title = "Delete heartbeat";
+                            deleteBtn.addEventListener("click", async (ev) => {
+                                ev.stopPropagation();
+                                if (!confirm("Delete this heartbeat?")) {
+                                    return;
+                                }
+                                try {
+                                    const response = await fetch(`/heartbeats/${beat.id}`, {
+                                        method: "DELETE",
+                                    });
+                                    if (!response.ok) {
+                                        throw new Error("Erreur lors de la suppression");
+                                    }
+                                    item.remove();
+                                    removeMarkerFromMap(beat.id);
+                                    // If no more heartbeats, show empty message
+                                    if (detailList.children.length === 0) {
+                                        detailList.innerHTML = `<div class="heartbeat-no-data">Aucun heartbeat pour cette escapade.</div>`;
+                                    }
+                                } catch (err) {
+                                    alert("Erreur : " + err.message);
+                                }
+                            });
+                            item.appendChild(deleteBtn);
+
+                            item.addEventListener("click", (ev) => {
+                                ev.stopPropagation();
+                                map.flyTo({
+                                    center: [beat.longitude, beat.latitude],
+                                    zoom: 4.0,
+                                    essential: true,
+                                    duration: 1000,
+                                });
+                            });
+
+                            item.addEventListener("mouseenter", () => {
+                                recolorMarker(beat.id, "#66b3ff");
+                            });
+
+                            item.addEventListener("mouseleave", () => {
+                                recolorMarker(beat.id, "#0066ff");
+                            });
+
+                            detailList.appendChild(item);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Erreur rafraîchissement heartbeats:", err);
+            }
+
+        } catch (err) {
+            alert("Erreur : " + err.message);
+        }
+    });
+
+    // Touche Échap pour quitter le mode édition
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && editMode) {
+            cancelCreate();
+        }
     });
 
 
