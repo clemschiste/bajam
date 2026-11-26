@@ -1,16 +1,7 @@
-use state::{AppState, db_connect};
-use crate::config::get_config;
-use crate::routes::router::create_router;
-use crate::tasks::clean::clean_expired_sessions;
-
-mod auth;
-mod config;
-mod state;
-mod routes;
-mod tasks;
-mod db;
-mod middleware;
-mod views;
+use bajam_daemon::config::get_config;
+use bajam_daemon::routes::router::create_router;
+use bajam_daemon::state::{AppState, db_connect};
+use bajam_daemon::tasks::clean::clean_expired_sessions;
 
 // Server
 #[tokio::main]
