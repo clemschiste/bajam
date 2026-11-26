@@ -1,10 +1,12 @@
-use bajam_common::models::{session::Session, user::User};
+use bajam_common::models::session::Session;
 use chrono::{Duration, Utc};
 use sha2::{Digest, Sha256};
 use sqlx::SqlitePool;
 use uuid::Uuid;
 
 use super::error::AuthServiceError;
+use crate::db::session_queries::*;
+use crate::db::user_queries::*;
 
 pub fn sha256_hash(value: &str) -> String {
     hex::encode(Sha256::digest(value.as_bytes()))
@@ -22,18 +24,12 @@ impl AuthService {
 
     pub async fn register(&self, username: &str, password: &str) -> Result<(), AuthServiceError> {
         let hash = bcrypt::hash(password, 10).map_err(|e| AuthServiceError::Internal(e.to_string()))?;
-        sqlx::query("INSERT into users (username, password_hash) VALUES (?, ?)")
-            .bind(username)
-            .bind(hash)
-            .execute(&self.db)
-            .await?;
-        Ok(())
+        Ok(sql_insert_user(&self.db, username, &hash).await?)
     }
 
     /// Checks credentials, creates a session, returns the raw token (only its sha256 is stored).
     pub async fn login(&self, username: &str, password: &str) -> Result<String, AuthServiceError> {
-        let user = sqlx::query_as!(User, "SELECT * FROM users WHERE username = $1", username)
-            .fetch_optional(&self.db)
+        let user = sql_find_user_by_username(&self.db, username)
             .await
             .map_err(|_| AuthServiceError::InvalidCredentials)?
             .ok_or(AuthServiceError::InvalidCredentials)?;
@@ -43,29 +39,14 @@ impl AuthService {
         }
 
         let token = Uuid::new_v4().to_string();
-        sqlx::query("INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)")
-            .bind(sha256_hash(&token))
-            .bind(user.id)
-            .bind(Utc::now().naive_utc() + Duration::days(30))
-            .execute(&self.db)
-            .await?;
+        let expires_at = Utc::now().naive_utc() + Duration::days(30);
+        sql_insert_session(&self.db, &sha256_hash(&token), user.id, expires_at).await?;
         Ok(token)
     }
 
     /// Valid session for token, None if unknown or expired (expired ones get deleted).
     pub async fn session_from_token(&self, token: &str) -> Result<Option<Session>, AuthServiceError> {
-        let hash = sha256_hash(token);
-        let session = sqlx::query_as!(
-            Session,
-            r#"
-          SELECT id, user_id, token_hash, expires_at
-          FROM sessions
-          WHERE token_hash = $1
-        "#,
-            hash
-        )
-        .fetch_optional(&self.db)
-        .await?;
+        let session = sql_find_session_by_hash(&self.db, &sha256_hash(token)).await?;
 
         let Some(session) = session else { return Ok(None) };
         if session.expires_at < Utc::now().naive_utc() {
@@ -76,20 +57,11 @@ impl AuthService {
     }
 
     pub async fn logout(&self, user_id: i64, session_id: i64) -> Result<(), AuthServiceError> {
-        sqlx::query("DELETE FROM sessions WHERE user_id = (?) AND id = (?)")
-            .bind(user_id)
-            .bind(session_id)
-            .execute(&self.db)
-            .await?;
-        Ok(())
+        Ok(sql_delete_user_session(&self.db, user_id, session_id).await?)
     }
 
     pub async fn logout_all(&self, user_id: i64) -> Result<(), AuthServiceError> {
-        sqlx::query("DELETE FROM sessions WHERE user_id = (?)")
-            .bind(user_id)
-            .execute(&self.db)
-            .await?;
-        Ok(())
+        Ok(sql_delete_all_user_sessions(&self.db, user_id).await?)
     }
 }
 
