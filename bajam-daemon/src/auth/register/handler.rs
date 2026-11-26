@@ -41,7 +41,7 @@ pub async fn register(
 
 #[cfg(test)]
 mod tests {
-    use axum::http::{header, StatusCode};
+    use axum::http::StatusCode;
     use serde_json::json;
 
     use crate::auth::test_support::*;
@@ -52,7 +52,7 @@ mod tests {
 
         let res = send(&app, post_json("/api/register", json!({"username": "user", "password": "secret"}))).await;
 
-        assert_eq!(res.status(), StatusCode::NO_CONTENT);
+        assert_status(&res, StatusCode::NO_CONTENT);
     }
 
     #[tokio::test]
@@ -62,7 +62,7 @@ mod tests {
 
         let res = send(&app, post_json("/api/login", json!({"username": "user", "password": "secret"}))).await;
 
-        assert_eq!(res.status(), StatusCode::OK);
+        assert_status(&res, StatusCode::OK);
     }
 
     #[tokio::test]
@@ -71,7 +71,7 @@ mod tests {
 
         let res = send(&app, post_json("/api/register", json!({"username": "user", "password": ""}))).await;
 
-        assert_eq!(res.status(), StatusCode::UNPROCESSABLE_ENTITY);
+        assert_status(&res, StatusCode::UNPROCESSABLE_ENTITY);
     }
 
     #[tokio::test]
@@ -80,7 +80,7 @@ mod tests {
 
         let res = send(&app, post_form("/register", "username=user&password=secret")).await;
 
-        assert_eq!(header_str(&res, header::LOCATION), "/dashboard");
+        assert_redirects_to(&res, "/dashboard");
     }
 
     #[tokio::test]
@@ -89,6 +89,6 @@ mod tests {
 
         let res = send(&app, post_form("/register", "username=user&password=secret")).await;
 
-        assert!(header_str(&res, header::SET_COOKIE).starts_with("session_id="));
+        assert_sets_session_cookie(&res);
     }
 }

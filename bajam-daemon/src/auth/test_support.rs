@@ -1,6 +1,6 @@
 //! Helpers for handler -> use case integration tests: real router, in-memory sqlite.
 use axum::body::Body;
-use axum::http::{header, Request, Response};
+use axum::http::{header, Request, Response, StatusCode};
 use axum::middleware::from_fn_with_state;
 use axum::Router;
 use serde_json::{json, Value};
@@ -70,8 +70,28 @@ pub async fn body_json(res: Response<Body>) -> Value {
     serde_json::from_slice(&bytes).unwrap()
 }
 
-pub fn header_str<'a>(res: &'a Response<Body>, name: header::HeaderName) -> &'a str {
+fn header_str<'a>(res: &'a Response<Body>, name: header::HeaderName) -> &'a str {
     res.headers().get(name).unwrap().to_str().unwrap()
+}
+
+#[track_caller]
+pub fn assert_status(res: &Response<Body>, expected: StatusCode) {
+    assert_eq!(res.status(), expected);
+}
+
+#[track_caller]
+pub fn assert_redirects_to(res: &Response<Body>, location: &str) {
+    assert_eq!(header_str(res, header::LOCATION), location);
+}
+
+#[track_caller]
+pub fn assert_sets_session_cookie(res: &Response<Body>) {
+    assert!(header_str(res, header::SET_COOKIE).starts_with("session_id="));
+}
+
+pub async fn assert_returns_token(res: Response<Body>) {
+    let token = body_json(res).await["token"].as_str().map(str::to_owned);
+    assert!(token.is_some_and(|t| !t.is_empty()), "response has no token");
 }
 
 /// Registers "user"/"secret" through the API.

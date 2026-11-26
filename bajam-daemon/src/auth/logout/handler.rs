@@ -54,7 +54,7 @@ pub async fn session_logout_web(
 
 #[cfg(test)]
 mod tests {
-    use axum::http::{header, StatusCode};
+    use axum::http::StatusCode;
 
     use crate::auth::test_support::*;
 
@@ -66,7 +66,7 @@ mod tests {
 
         let res = send(&app, post_bearer("/api/logout", &token)).await;
 
-        assert_eq!(res.status(), StatusCode::NO_CONTENT);
+        assert_status(&res, StatusCode::NO_CONTENT);
     }
 
     #[tokio::test]
@@ -78,7 +78,7 @@ mod tests {
 
         let res = send(&app, post_bearer("/api/logout", &token)).await;
 
-        assert_eq!(header_str(&res, header::LOCATION), "/login");
+        assert_redirects_to(&res, "/login");
     }
 
     #[tokio::test]
@@ -91,7 +91,7 @@ mod tests {
 
         let res = send(&app, post_bearer("/api/logout", &t2)).await;
 
-        assert_eq!(header_str(&res, header::LOCATION), "/login");
+        assert_redirects_to(&res, "/login");
     }
 
     #[tokio::test]
@@ -102,7 +102,7 @@ mod tests {
 
         let res = send(&app, post_cookie("/logout", &token)).await;
 
-        assert_eq!(header_str(&res, header::LOCATION), "/login");
+        assert_redirects_to(&res, "/login");
     }
 
     #[tokio::test]
@@ -114,6 +114,6 @@ mod tests {
 
         let res = send(&app, post_bearer("/api/logout", &token)).await;
 
-        assert_eq!(header_str(&res, header::LOCATION), "/login");
+        assert_redirects_to(&res, "/login");
     }
 }

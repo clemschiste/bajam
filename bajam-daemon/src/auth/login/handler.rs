@@ -50,7 +50,7 @@ pub fn session_redirect(jar: CookieJar, token: String) -> (CookieJar, Redirect) 
 
 #[cfg(test)]
 mod tests {
-    use axum::http::{header, StatusCode};
+    use axum::http::StatusCode;
     use serde_json::json;
 
     use crate::auth::test_support::*;
@@ -66,7 +66,7 @@ mod tests {
 
         let res = send(&app, post_json("/api/login", creds("secret"))).await;
 
-        assert_eq!(res.status(), StatusCode::OK);
+        assert_status(&res, StatusCode::OK);
     }
 
     #[tokio::test]
@@ -76,7 +76,7 @@ mod tests {
 
         let res = send(&app, post_json("/api/login", creds("secret"))).await;
 
-        assert!(!body_json(res).await["token"].as_str().unwrap().is_empty());
+        assert_returns_token(res).await;
     }
 
     #[tokio::test]
@@ -86,7 +86,7 @@ mod tests {
 
         let res = send(&app, post_json("/api/login", creds("wrong"))).await;
 
-        assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
+        assert_status(&res, StatusCode::UNAUTHORIZED);
     }
 
     #[tokio::test]
@@ -95,7 +95,7 @@ mod tests {
 
         let res = send(&app, post_json("/api/login", json!({"username": "", "password": "x"}))).await;
 
-        assert_eq!(res.status(), StatusCode::UNPROCESSABLE_ENTITY);
+        assert_status(&res, StatusCode::UNPROCESSABLE_ENTITY);
     }
 
     #[tokio::test]
@@ -105,7 +105,7 @@ mod tests {
 
         let res = send(&app, post_form("/login", "username=user&password=secret")).await;
 
-        assert_eq!(header_str(&res, header::LOCATION), "/dashboard");
+        assert_redirects_to(&res, "/dashboard");
     }
 
     #[tokio::test]
@@ -115,6 +115,6 @@ mod tests {
 
         let res = send(&app, post_form("/login", "username=user&password=secret")).await;
 
-        assert!(header_str(&res, header::SET_COOKIE).starts_with("session_id="));
+        assert_sets_session_cookie(&res);
     }
 }
