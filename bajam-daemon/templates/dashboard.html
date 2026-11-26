@@ -6,7 +6,7 @@
 
     <script src="https://unpkg.com/htmx.org@2.0.8"></script>
 
-    <link rel="stylesheet" href="static/style.css"/>
+    <link rel="stylesheet" href="{{ crate::routes::paths::STATIC }}/style.css"/>
     <link rel="icon" href="/favicon.ico"/>
 
     <link
@@ -249,7 +249,7 @@
 
     <!-- Escapades -->
     <form
-        hx-post="/escapades"
+        hx-post="{{ crate::routes::paths::ESCAPADES }}"
         hx-target="#escapades-list"
         hx-swap="innerHTML"
     >
@@ -342,6 +342,17 @@
 
     import * as maplibregl from
         "https://unpkg.com/maplibre-gl@6.7.0/dist/maplibre-gl.mjs";
+
+    // Route paths come from routes/paths.rs; {name} segments are filled by fill()
+    const PATHS = {
+        escapade: "{{ crate::routes::paths::ESCAPADE }}",
+        escapadeHeartbeat: "{{ crate::routes::paths::ESCAPADE_HEARTBEAT }}",
+        escapadeHeartbeats: "{{ crate::routes::paths::ESCAPADE_HEARTBEATS }}",
+        heartbeat: "{{ crate::routes::paths::HEARTBEAT }}",
+        image: "{{ crate::routes::paths::IMAGE }}",
+    };
+    const fill = (path, params) =>
+        path.replace(/\{(\w+)\}/g, (_, key) => encodeURIComponent(params[key]));
 
 
     // --------------------------------------------------
@@ -436,7 +447,7 @@
 
             popup.on("open", () => {
                 if (!image.src) {
-                    image.src = `/image/${encodeURIComponent(beat.picture_id)}`;
+                    image.src = fill(PATHS.image, { picture_id: beat.picture_id });
                     image.style.display = "block";
                     imagePlaceholder.style.display = "none";
                 }
@@ -735,7 +746,7 @@
         detailList.innerHTML = "";
 
         try {
-            const response = await fetch(`/escapades/${escapadeId}/heartbeats`);
+            const response = await fetch(fill(PATHS.escapadeHeartbeats, { escapade_id: escapadeId }));
             if (!response.ok) {
                 throw new Error("Erreur lors du chargement des heartbeats");
             }
@@ -770,7 +781,7 @@
                             return;
                         }
                         try {
-                            const response = await fetch(`/heartbeats/${beat.id}`, {
+                            const response = await fetch(fill(PATHS.heartbeat, { heartbeat_id: beat.id }), {
                                 method: "DELETE",
                             });
                             if (!response.ok) {
@@ -1004,7 +1015,7 @@
             return;
         }
         try {
-            const response = await fetch(`/escapades/${escapadeId}`, {
+            const response = await fetch(fill(PATHS.escapade, { escapade_id: escapadeId }), {
                 method: "DELETE",
             });
             if (!response.ok) {
@@ -1066,7 +1077,7 @@
         const description = createDescInput.value.trim() || undefined;
 
         try {
-            const response = await fetch(`/escapades/${escapadeId}/heartbeat`, {
+            const response = await fetch(fill(PATHS.escapadeHeartbeat, { escapade_id: escapadeId }), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -1111,7 +1122,7 @@
 
             // Rafraîchir la liste des heartbeats de cette escapade
             try {
-                const beatsResp = await fetch(`/escapades/${escapadeId}/heartbeats`);
+                const beatsResp = await fetch(fill(PATHS.escapadeHeartbeats, { escapade_id: escapadeId }));
                 if (beatsResp.ok) {
                     const beats = await beatsResp.json();
                     detailList.innerHTML = "";
@@ -1144,7 +1155,7 @@
                                     return;
                                 }
                                 try {
-                                    const response = await fetch(`/heartbeats/${beat.id}`, {
+                                    const response = await fetch(fill(PATHS.heartbeat, { heartbeat_id: beat.id }), {
                                         method: "DELETE",
                                     });
                                     if (!response.ok) {

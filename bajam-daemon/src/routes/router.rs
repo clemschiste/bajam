@@ -25,18 +25,18 @@ pub fn create_router(state: AppState) -> Router {
     // Protected routes (requires valide Authorization header)
     let protected_routes = Router::new()
         .route(
-            "/api/escapades/{escapade_id}/heartbeat",
+            paths::API_ESCAPADE_HEARTBEAT,
             post(heartbeat_post),
         ) // Create a new heartbeat
-        .route("/api/escapades", post(escapade_post_api)) // Create (and join) a new escapade
-        .route("/api/escapades/{escapade_id}", delete(escapade_delete)) // Delete an escapade (with cascade)
-        .route("/escapades/{escapade_id}/heartbeat", post(heartbeat_post)) // Create a new heartbeat
-        .route("/escapades/{escapade_id}", delete(escapade_delete)) // Delete an escapade (with cascade)
-        .route("/heartbeats/{heartbeat_id}", delete(heartbeat_delete)) // Delete a heartbeat
-        .route("/escapades", post(escapade_post_web)) // Create (and join) a new escapade
-        .route("/escapades", get(escapades_list)) // list all escapades of the user
-        .route("/escapades/{escapade_id}/heartbeats", get(heartbeats_list)) // list all escapades of the user
-        .route("/upload/{picture_id}", post(post_picture)) // Upload in conjuction with a hb
+        .route(paths::API_ESCAPADES, post(escapade_post_api)) // Create (and join) a new escapade
+        .route(paths::API_ESCAPADE, delete(escapade_delete)) // Delete an escapade (with cascade)
+        .route(paths::ESCAPADE_HEARTBEAT, post(heartbeat_post)) // Create a new heartbeat
+        .route(paths::ESCAPADE, delete(escapade_delete)) // Delete an escapade (with cascade)
+        .route(paths::HEARTBEAT, delete(heartbeat_delete)) // Delete a heartbeat
+        .route(paths::ESCAPADES, post(escapade_post_web)) // Create (and join) a new escapade
+        .route(paths::ESCAPADES, get(escapades_list)) // list all escapades of the user
+        .route(paths::ESCAPADE_HEARTBEATS, get(heartbeats_list)) // list all escapades of the user
+        .route(paths::UPLOAD, post(post_picture)) // Upload in conjuction with a hb
         .route(paths::DASHBOARD, get(dashboard_view)) // Display the dashboard.html template (last heartbeat loaded)
         .route(paths::ROOT, get(|| async {})) // redirect either to dashboard or login (see auth middleware)
         .merge(auth::protected_routes())
@@ -46,9 +46,9 @@ pub fn create_router(state: AppState) -> Router {
     // Full router
     Router::new()
         .merge(auth::public_routes())
-        .route("/image/{picture_id}", get(get_picture))
+        .route(paths::IMAGE, get(get_picture))
         .merge(protected_routes)
-        .nest_service("/static", ServeDir::new("static"))
+        .nest_service(paths::STATIC, ServeDir::new("static"))
         .layer(DefaultBodyLimit::max(20 * 1024 * 1024))
         .layer(from_fn(middleware_logger))
         .with_state(state)
