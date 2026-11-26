@@ -3,6 +3,7 @@ use crate::config::get_config;
 use crate::routes::router::create_router;
 use crate::tasks::clean::clean_expired_sessions;
 
+mod auth;
 mod config;
 mod state;
 mod routes;

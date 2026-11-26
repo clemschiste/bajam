@@ -3,16 +3,12 @@ use axum::body::Body;
 use axum::http::header::SET_COOKIE;
 use axum::response::{IntoResponse, Redirect};
 use axum_extra::extract::cookie::{Cookie, SameSite};
-use bcrypt::verify;
 use axum::{Json, extract::State};
 use axum::http::{Response, StatusCode};
-use uuid::Uuid;
-use sha2::{Sha256, Digest};
-use chrono::{Duration, Utc};
 use bajam_common::models::session::{LoginResponse};
-use bajam_common::models::user::User;
 
 use crate::routes::user_register::UserPost;
+use crate::auth::to_http;
 use crate::state::AppState;
 
 // Here we want to check if the username/passord input is valid
@@ -22,7 +18,7 @@ pub async fn login_web(
     Form(payload): Form<UserPost>
 ) -> Result<Response<Body>, (StatusCode, String)> {
 
-    let token = authenticate(&state, payload.username, payload.password).await?;
+    let token = state.auth.login(&payload.username, &payload.password).await.map_err(to_http)?;
     
     let cookie = Cookie::build(("session_id", token))
         .http_only(true)
@@ -47,61 +43,11 @@ pub async fn login_api(
     Json(payload): Json<UserPost>
 ) -> Result<Json<LoginResponse>, (StatusCode, String)> {
 
-    let token = authenticate(&state, payload.username, payload.password).await?;
+    let token = state.auth.login(&payload.username, &payload.password).await.map_err(to_http)?;
     
     Ok(
         Json(
             LoginResponse { token }
         )
     )
-}
-
-type Token = String;
-
-/// Authenticate checks for credentials and then creates a new session with a token returned (if no valid session)
-pub async fn authenticate(state: &AppState, username: String, password: String) -> Result<Token, (StatusCode, String)> {
-    let user_opt = sqlx::query_as!(
-        User,
-        "SELECT * FROM users WHERE username = $1",
-        username,
-    )
-    .fetch_optional(&state.db)
-    .await
-    .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid credentials".to_string()))?;
-
-    let user = match user_opt {
-        Some(user) => user,
-        None => return Err((StatusCode::UNAUTHORIZED, "Invalid credentials".to_string()))
-    };
-
-    let valid = verify(password, &user.password_hash)
-        .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid credentials".to_string()))?;
-
-    if !valid {
-        return Err((StatusCode::UNAUTHORIZED, "Invalid password".to_string()));
-    }
-
-    // Give token for auth and insert it into the session table hashed
-    // Here we opt for Uuid::v4 sha256 hashed in the db 
-    let token = Uuid::new_v4().to_string();
-    let hashed_token = Sha256::digest(token.as_bytes());
-    let hash = hex::encode(hashed_token);
-
-    sqlx::query(
-        r#"
-          INSERT INTO sessions (token_hash, user_id, expires_at)
-          VALUES (?, ?, ?)  
-        "#
-    )
-    .bind(hash)
-    .bind(user.id)
-    .bind(Utc::now().naive_utc() + Duration::days(30))
-    .execute(&state.db)
-    .await
-    .map_err(|e| {
-        eprintln!("Database error {}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, format!("Database error : {e}"))
-    })?;
-
-    Ok(token)
 }

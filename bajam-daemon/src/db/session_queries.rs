@@ -1,34 +1,4 @@
-use axum::http::StatusCode;
 use crate::state::AppState;
-
-pub async fn sql_delete_user_session(state: &AppState, user_id: &i64, session_id: &i64) -> Result<StatusCode, (StatusCode, String)> {
-  sqlx::query("DELETE FROM sessions WHERE user_id = (?) AND id = (?)")
-    .bind(user_id)
-    .bind(session_id)
-    .execute(&state.db)
-    .await
-    .map_err(|e| {
-        eprintln!("Database error {}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, format!("Database error : {e}"))
-    })?;
-
-  Ok(StatusCode::OK)
-  
-}
-
-pub async fn sql_delete_all_user_sessions(state: &AppState, user_id: &i64) -> Result<StatusCode, (StatusCode, String)> {
-  sqlx::query("DELETE FROM sessions WHERE user_id = (?)")
-    .bind(user_id)
-    .execute(&state.db)
-    .await
-    .map_err(|e| {
-        eprintln!("Database error {}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, format!("Database error : {e}"))
-    })?;
-
-  Ok(StatusCode::OK)
-
-}
 
 pub async fn sql_delete_expired_sessions(state: &AppState) -> anyhow::Result<u64> {
   let result = sqlx::query("DELETE FROM sessions WHERE expired_at < datetime('now')")

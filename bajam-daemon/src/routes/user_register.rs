@@ -6,7 +6,7 @@ use axum_extra::extract::cookie::{Cookie, SameSite};
 use axum::{Json, extract::State};
 use axum::http::{Response, StatusCode};
 use serde::Deserialize;
-use crate::routes::user_login::authenticate;
+use crate::auth::to_http;
 use crate::state::AppState;
 
 // Here we want to check if the username/passord input is valid
@@ -17,10 +17,10 @@ pub async fn register_web(
 ) -> Result<Response<Body>, (StatusCode, String)> {
 
     // Create user
-    register_user(&payload, &state).await?;
+    state.auth.register(&payload.username, &payload.password).await.map_err(to_http)?;
 
-    // Create session with authenticate and get token for session_id
-    let token = authenticate(&state, payload.username, payload.password).await?;
+    // Create session and get token
+    let token = state.auth.login(&payload.username, &payload.password).await.map_err(to_http)?;
     
     let cookie = Cookie::build(("session_id", token))
         .http_only(true)
@@ -47,7 +47,7 @@ pub async fn register(
 ) -> Result<StatusCode, (StatusCode, String)> {
 
     // Create user
-    register_user(&payload, &state).await?;
+    state.auth.register(&payload.username, &payload.password).await.map_err(to_http)?;
 
     Ok(StatusCode::NO_CONTENT)
         
@@ -57,27 +57,4 @@ pub async fn register(
 pub struct UserPost {
     pub username: String,
     pub password: String,
-}
-
-async fn register_user(payload: &UserPost, state: &AppState) -> Result<StatusCode, (StatusCode, String)> {
-    let hashed_password = bcrypt::hash(payload.password.clone(), 10)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-
-    sqlx::query(
-        r#"
-            INSERT into users (username, password_hash)
-            VALUES (?, ?)
-        "#
-    )
-    .bind(payload.username.clone())
-    .bind(hashed_password)
-    .execute(&state.db)
-    .await
-    .map_err(|e| {
-        eprintln!("Database error {}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, format!("Database error : {e}"))
-    })?;
-
-    Ok(StatusCode::NO_CONTENT)
-    
 }
