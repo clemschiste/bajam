@@ -1,3 +1,4 @@
+pub mod credentials;
 pub mod error;
 pub mod login;
 pub mod logout;
@@ -5,19 +6,12 @@ pub mod register;
 pub mod session;
 
 use axum::Router;
-use serde::Deserialize;
 
 use crate::state::AppState;
 
+pub use credentials::Credentials;
 pub use error::{to_http, AuthServiceError};
 pub use session::middleware;
-
-/// Credentials posted by login and register.
-#[derive(Deserialize, Debug)]
-pub struct UserPost {
-    pub username: String,
-    pub password: String,
-}
 
 /// Routes reachable without a session.
 pub fn public_routes() -> Router<AppState> {
