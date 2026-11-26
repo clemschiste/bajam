@@ -9,29 +9,44 @@ use common::*;
 
 
 #[tokio::test]
-// Scenario create user, login, logout
-pub async fn login_logout() {
+pub async fn register() {
     let app = test_app().await;
 
-    let register = test_register_user("user", "secret", app.clone()).await;
-    let login = test_login_user("user", "secret", app.clone()).await;
-    let token = test_extract_token_on_login(login).await;
-    let logout = test_logout_user(&token, app.clone()).await;
+    let register = test_register_user("user", "secret", app).await;
 
     assert_eq!(register.status(), StatusCode::NO_CONTENT);
-    assert_eq!(logout.status(), StatusCode::NO_CONTENT);
 }
 
 #[tokio::test]
-// Scenario create user, wrong login
-pub async fn register_and_wrong_login() {
+pub async fn login() {
     let app = test_app().await;
+    test_register_user("user", "secret", app.clone()).await;
 
-    let register = test_register_user("user", "secret", app.clone()).await;
-    let login = test_login_user("user", "wrong_secret", app.clone()).await;
+    let login = test_login_user("user", "secret", app).await;
 
-    assert_eq!(register.status(), StatusCode::NO_CONTENT);
+    assert_eq!(login.status(), StatusCode::OK);
+}
+
+#[tokio::test]
+pub async fn wrong_login() {
+    let app = test_app().await;
+    test_register_user("user", "secret", app.clone()).await;
+
+    let login = test_login_user("user", "wrong_secret", app).await;
+
     assert_eq!(login.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+pub async fn logout() {
+    let app = test_app().await;
+    test_register_user("user", "secret", app.clone()).await;
+    let login = test_login_user("user", "secret", app.clone()).await;
+    let token = test_extract_token_on_login(login).await;
+
+    let logout = test_logout_user(&token, app).await;
+
+    assert_eq!(logout.status(), StatusCode::NO_CONTENT);
 }
 
 // Fresh app: in-memory DB, empty config.
