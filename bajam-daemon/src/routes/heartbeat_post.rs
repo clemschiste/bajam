@@ -2,7 +2,7 @@ use axum::{Extension, Json, extract::{State, Path}};
 use axum::http::StatusCode;
 use sqlx::Result;
 use uuid::Uuid;
-use crate::{middleware::auth::AuthContext, state::AppState};
+use crate::{auth::middleware::AuthContext, state::AppState};
 use bajam_common::models::heartbeat::{HeartbeatPost, ImageHandle};
 
 pub async fn heartbeat_post(

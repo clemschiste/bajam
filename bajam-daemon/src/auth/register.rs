@@ -5,19 +5,21 @@ use axum::response::{IntoResponse, Redirect};
 use axum_extra::extract::cookie::{Cookie, SameSite};
 use axum::{Json, extract::State};
 use axum::http::{Response, StatusCode};
-use bajam_common::models::session::{LoginResponse};
-
-use crate::routes::user_register::UserPost;
-use crate::auth::to_http;
+use serde::Deserialize;
+use super::to_http;
 use crate::state::AppState;
 
 // Here we want to check if the username/passord input is valid
 // Then handle a UUid token that we sha256 hash in the db
-pub async fn login_web(
+pub async fn register_web(
     State(state): State<AppState>,
     Form(payload): Form<UserPost>
 ) -> Result<Response<Body>, (StatusCode, String)> {
 
+    // Create user
+    state.auth.register(&payload.username, &payload.password).await.map_err(to_http)?;
+
+    // Create session and get token
     let token = state.auth.login(&payload.username, &payload.password).await.map_err(to_http)?;
     
     let cookie = Cookie::build(("session_id", token))
@@ -38,16 +40,21 @@ pub async fn login_web(
     Ok(response)
 }
 
-pub async fn login_api(
+// Function to create a user in the database with hashed_password based on post
+pub async fn register(
     State(state): State<AppState>,
     Json(payload): Json<UserPost>
-) -> Result<Json<LoginResponse>, (StatusCode, String)> {
+) -> Result<StatusCode, (StatusCode, String)> {
 
-    let token = state.auth.login(&payload.username, &payload.password).await.map_err(to_http)?;
-    
-    Ok(
-        Json(
-            LoginResponse { token }
-        )
-    )
+    // Create user
+    state.auth.register(&payload.username, &payload.password).await.map_err(to_http)?;
+
+    Ok(StatusCode::NO_CONTENT)
+        
+}
+
+#[derive(Deserialize, Debug)]
+pub struct UserPost {
+    pub username: String,
+    pub password: String,
 }

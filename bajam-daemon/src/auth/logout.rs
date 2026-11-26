@@ -2,9 +2,9 @@ use axum::response::Redirect;
 use axum::{Extension, extract::State, http::StatusCode};
 use axum_extra::extract::cookie::{Cookie, SameSite};
 use axum_extra::extract::CookieJar;
-use crate::middleware::auth::AuthContext;
+use crate::auth::middleware::AuthContext;
 use crate::state::AppState;
-use crate::auth::to_http;
+use super::to_http;
 
 
 pub async fn session_logout(

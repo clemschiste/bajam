@@ -1,29 +1,10 @@
-use axum::http::StatusCode;
 use bajam_common::models::{session::Session, user::User};
 use chrono::{Duration, Utc};
 use sha2::{Digest, Sha256};
 use sqlx::SqlitePool;
 use uuid::Uuid;
 
-#[derive(Debug, PartialEq)]
-pub enum AuthServiceError {
-    InvalidCredentials,
-    Internal(String),
-}
-
-impl From<sqlx::Error> for AuthServiceError {
-    fn from(e: sqlx::Error) -> Self {
-        eprintln!("Database error {e}");
-        Self::Internal(format!("Database error : {e}"))
-    }
-}
-
-pub fn to_http(e: AuthServiceError) -> (StatusCode, String) {
-    match e {
-        AuthServiceError::InvalidCredentials => (StatusCode::UNAUTHORIZED, "Invalid credentials".into()),
-        AuthServiceError::Internal(m) => (StatusCode::INTERNAL_SERVER_ERROR, m),
-    }
-}
+use super::error::AuthServiceError;
 
 pub fn sha256_hash(value: &str) -> String {
     hex::encode(Sha256::digest(value.as_bytes()))

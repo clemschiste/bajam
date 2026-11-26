@@ -3,7 +3,7 @@ use axum::{
 };
 use url::Url;
 
-use crate::{middleware::auth::{AuthContext, AuthMethod}, state::AppState};
+use crate::{auth::middleware::{AuthContext, AuthMethod}, state::AppState};
 
 // CSRF middleware
 pub async fn middleware_origin(

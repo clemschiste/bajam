@@ -7,7 +7,7 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use crate::db::escapade_queries::sql_list_escapades;
 use crate::db::user_queries::sql_username_from_id;
-use crate::middleware::auth::AuthContext;
+use crate::auth::middleware::AuthContext;
 use crate::state::AppState;
 
 use bajam_common::models::heartbeat::Heartbeat;

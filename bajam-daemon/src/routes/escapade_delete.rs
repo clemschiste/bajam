@@ -1,5 +1,5 @@
 use axum::{Extension, extract::{State, Path}, http::StatusCode};
-use crate::{middleware::auth::AuthContext, state::AppState};
+use crate::{auth::middleware::AuthContext, state::AppState};
 use crate::db::escapade_queries::sql_delete_escapade;
 
 pub async fn escapade_delete(
