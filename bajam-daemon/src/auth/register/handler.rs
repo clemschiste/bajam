@@ -38,3 +38,57 @@ pub async fn register(
     register_user(&state.db, &credentials).await.map_err(to_http)?;
     Ok(StatusCode::NO_CONTENT)
 }
+
+#[cfg(test)]
+mod tests {
+    use axum::http::{header, StatusCode};
+    use serde_json::json;
+
+    use crate::auth::test_support::*;
+
+    #[tokio::test]
+    async fn register_api_returns_204() {
+        let app = app().await;
+
+        let res = send(&app, post_json("/api/register", json!({"username": "user", "password": "secret"}))).await;
+
+        assert_eq!(res.status(), StatusCode::NO_CONTENT);
+    }
+
+    #[tokio::test]
+    async fn registered_user_can_login() {
+        let app = app().await;
+        register_user(&app).await;
+
+        let res = send(&app, post_json("/api/login", json!({"username": "user", "password": "secret"}))).await;
+
+        assert_eq!(res.status(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn register_api_empty_password_is_rejected_before_use_case() {
+        let app = app().await;
+
+        let res = send(&app, post_json("/api/register", json!({"username": "user", "password": ""}))).await;
+
+        assert_eq!(res.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    }
+
+    #[tokio::test]
+    async fn register_web_redirects_to_dashboard() {
+        let app = app().await;
+
+        let res = send(&app, post_form("/register", "username=user&password=secret")).await;
+
+        assert_eq!(header_str(&res, header::LOCATION), "/dashboard");
+    }
+
+    #[tokio::test]
+    async fn register_web_sets_session_cookie() {
+        let app = app().await;
+
+        let res = send(&app, post_form("/register", "username=user&password=secret")).await;
+
+        assert!(header_str(&res, header::SET_COOKIE).starts_with("session_id="));
+    }
+}

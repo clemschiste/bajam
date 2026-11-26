@@ -11,7 +11,7 @@ pub async fn register(db: &SqlitePool, credentials: &Credentials) -> Result<(), 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::auth::test_db;
+    use crate::auth::test_support::test_db;
 
     fn creds(u: &str, p: &str) -> Credentials {
         Credentials::new(u, p).unwrap()

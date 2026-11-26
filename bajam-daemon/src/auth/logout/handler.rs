@@ -51,3 +51,69 @@ pub async fn session_logout_web(
     
     Ok((jar, Redirect::to("/login")))  
 }
+
+#[cfg(test)]
+mod tests {
+    use axum::http::{header, StatusCode};
+
+    use crate::auth::test_support::*;
+
+    #[tokio::test]
+    async fn logout_api_returns_204() {
+        let app = app().await;
+        register_user(&app).await;
+        let token = login_token(&app).await;
+
+        let res = send(&app, post_bearer("/api/logout", &token)).await;
+
+        assert_eq!(res.status(), StatusCode::NO_CONTENT);
+    }
+
+    #[tokio::test]
+    async fn logout_api_invalidates_token() {
+        let app = app().await;
+        register_user(&app).await;
+        let token = login_token(&app).await;
+        send(&app, post_bearer("/api/logout", &token)).await;
+
+        let res = send(&app, post_bearer("/api/logout", &token)).await;
+
+        assert_eq!(header_str(&res, header::LOCATION), "/login");
+    }
+
+    #[tokio::test]
+    async fn logout_all_invalidates_every_token() {
+        let app = app().await;
+        register_user(&app).await;
+        let t1 = login_token(&app).await;
+        let t2 = login_token(&app).await;
+        send(&app, post_bearer("/api/logout/all", &t1)).await;
+
+        let res = send(&app, post_bearer("/api/logout", &t2)).await;
+
+        assert_eq!(header_str(&res, header::LOCATION), "/login");
+    }
+
+    #[tokio::test]
+    async fn logout_web_redirects_to_login() {
+        let app = app().await;
+        register_user(&app).await;
+        let token = login_token(&app).await;
+
+        let res = send(&app, post_cookie("/logout", &token)).await;
+
+        assert_eq!(header_str(&res, header::LOCATION), "/login");
+    }
+
+    #[tokio::test]
+    async fn logout_web_invalidates_session() {
+        let app = app().await;
+        register_user(&app).await;
+        let token = login_token(&app).await;
+        send(&app, post_cookie("/logout", &token)).await;
+
+        let res = send(&app, post_bearer("/api/logout", &token)).await;
+
+        assert_eq!(header_str(&res, header::LOCATION), "/login");
+    }
+}

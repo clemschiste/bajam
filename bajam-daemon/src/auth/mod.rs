@@ -23,14 +23,5 @@ pub fn protected_routes() -> Router<AppState> {
     logout::routes()
 }
 
-/// Fresh in-memory DB with migrations applied.
 #[cfg(test)]
-pub(crate) async fn test_db() -> sqlx::SqlitePool {
-    let db = sqlx::sqlite::SqlitePoolOptions::new()
-        .max_connections(1)
-        .connect("sqlite::memory:")
-        .await
-        .unwrap();
-    sqlx::migrate!().run(&db).await.unwrap();
-    db
-}
+pub(crate) mod test_support;

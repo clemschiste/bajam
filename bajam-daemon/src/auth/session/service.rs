@@ -42,7 +42,7 @@ pub async fn delete_all(db: &SqlitePool, user_id: i64) -> Result<(), AuthService
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::auth::test_db;
+    use crate::auth::test_support::test_db;
 
     #[tokio::test]
     async fn created_session_is_found() {
