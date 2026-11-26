@@ -11,8 +11,6 @@ use crate::routes::heartbeat_post::*;
 use crate::routes::upload::*;
 use crate::state::AppState;
 use crate::views::dashboard::*;
-use crate::views::login::*;
-use crate::views::register::*;
 use axum::extract::DefaultBodyLimit;
 use axum::middleware::{from_fn, from_fn_with_state};
 use axum::routing::delete;
@@ -47,8 +45,6 @@ pub fn create_router(state: AppState) -> Router {
     // Full router
     Router::new()
         .merge(auth::public_routes())
-        .route("/register", get(register_view)) // register via form view html
-        .route("/login", get(login_view)) // Verif + token to user
         .route("/image/{picture_id}", get(get_picture))
         .merge(protected_routes)
         .nest_service("/static", ServeDir::new("static"))

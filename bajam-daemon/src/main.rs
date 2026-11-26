@@ -1,7 +1,7 @@
 use bajam_daemon::config::get_config;
 use bajam_daemon::routes::router::create_router;
 use bajam_daemon::state::{AppState, db_connect};
-use bajam_daemon::tasks::clean::clean_expired_sessions;
+use bajam_daemon::auth::session::cleanup::clean_expired_sessions;
 
 // Server
 #[tokio::main]

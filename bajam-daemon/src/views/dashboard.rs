@@ -6,7 +6,6 @@ use bajam_common::models::escapade::Escapade;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use crate::db::escapade_queries::sql_list_escapades;
-use crate::db::user_queries::sql_username_from_id;
 use crate::auth::middleware::AuthContext;
 use crate::state::AppState;
 
@@ -18,7 +17,7 @@ pub async fn dashboard_view(
     State(state): State<AppState>,
     Extension(auth_context): Extension<AuthContext>
 ) -> Result<Html<String>, (StatusCode, String)> {
-    let username = sql_username_from_id(&state, &auth_context.user_id).await?;
+    let username = sql_username_from_id(&state.db, &auth_context.user_id).await?;
 
     // Database query, guetting the last timestamped row
     // If empty return an empty row error.
@@ -159,4 +158,12 @@ pub struct HeartbeatResponse {
     pub description: Option<String>,
     pub picture_id: String,
     pub history: Vec<Heartbeat>, // Pour map libre js -> [longitude, latitude]
+}
+
+async fn sql_username_from_id(db: &sqlx::SqlitePool, user_id: &i64) -> Result<String, (StatusCode, String)> {
+    sqlx::query_scalar("SELECT username FROM users WHERE id = (?)")
+        .bind(user_id)
+        .fetch_one(db)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Database error : {e}")))
 }

@@ -3,6 +3,7 @@ use axum::response::{IntoResponse, Redirect};
 use axum::{middleware::Next, response::Response};
 use axum::extract::{State, Request};
 use axum_extra::extract::CookieJar;
+use super::service;
 use crate::state::AppState;
 
 #[derive(Debug, Clone)]
@@ -85,7 +86,7 @@ pub async fn middleware_auth(State(state): State<AppState>, mut req: Request, ne
     let token = match credentials {
         AuthCredentials::Bearer(t) | AuthCredentials::SessionCookie(t) => t,
     };
-    let session = match state.auth.session_from_token(&token).await.map_err(|_| AuthError::DatabaseError)? {
+    let session = match service::from_token(&state.db, &token).await.map_err(|_| AuthError::DatabaseError)? {
         Some(session) => session,
         None => return Ok(Redirect::to("/login").into_response()),
     };

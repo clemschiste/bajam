@@ -1,14 +1,12 @@
 use sqlx::{SqlitePool};
 use sqlx::{Pool, Result, Sqlite, sqlite::SqlitePoolOptions, migrate::Migrator};
 use bajam_common::models::heartbeat::Heartbeat;
-use crate::auth::AuthService;
 
 #[derive(Clone)]
 pub struct AppState {
     pub db: SqlitePool,
     pub history: Vec<Heartbeat>,
     pub config: AppConfig,
-    pub auth: AuthService,
 }
 
 // A voir si je souhaite tracer la ligne. Probablement pas maintenant mais il faudrait retourner dans le bon ordre
@@ -32,13 +30,10 @@ impl AppState {
 
         println!("Done.");
 
-        let auth = AuthService::new(db.clone());
-
         Ok(Self {
             db,
             history,
-            config,
-            auth,
+            config
         })
 
     }

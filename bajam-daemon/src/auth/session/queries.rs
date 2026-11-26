@@ -1,16 +1,6 @@
 use bajam_common::models::session::Session;
 use chrono::NaiveDateTime;
 use sqlx::SqlitePool;
-use crate::state::AppState;
-
-pub async fn sql_delete_expired_sessions(state: &AppState) -> anyhow::Result<u64> {
-  let result = sqlx::query("DELETE FROM sessions WHERE expired_at < datetime('now')")
-    .execute(&state.db)
-    .await?;
-
-  // return number of sessions deleted
-  Ok(result.rows_affected())
-}
 
 pub async fn sql_insert_session(db: &SqlitePool, token_hash: &str, user_id: i64, expires_at: NaiveDateTime) -> sqlx::Result<()> {
   sqlx::query("INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)")
@@ -51,4 +41,13 @@ pub async fn sql_delete_all_user_sessions(db: &SqlitePool, user_id: i64) -> sqlx
     .execute(db)
     .await?;
   Ok(())
+}
+
+pub async fn sql_delete_expired_sessions(db: &SqlitePool) -> anyhow::Result<u64> {
+  let result = sqlx::query("DELETE FROM sessions WHERE expired_at < datetime('now')")
+    .execute(db)
+    .await?;
+
+  // return number of sessions deleted
+  Ok(result.rows_affected())
 }
