@@ -8,6 +8,7 @@ use sqlx::SqlitePool;
 use tower::ServiceExt;
 
 use super::middleware::middleware_auth;
+use crate::routes::paths;
 use super::{login, logout, register};
 use crate::config::AppConfig;
 use crate::state::AppState;
@@ -105,12 +106,12 @@ pub async fn assert_returns_token(res: Response<Body>) {
 
 /// Registers "user"/"secret" through the API.
 pub async fn register_user(app: &Router) {
-    send(app, post_json("/api/register", json!({"username": "user", "password": "secret"}))).await;
+    send(app, post_json(paths::API_REGISTER, json!({"username": "user", "password": "secret"}))).await;
 }
 
 /// Logs in "user"/"secret" (see register_user) through the API, returns the token.
 pub async fn login_token(app: &Router) -> String {
-    let res = send(app, post_json("/api/login", json!({"username": "user", "password": "secret"}))).await;
+    let res = send(app, post_json(paths::API_LOGIN, json!({"username": "user", "password": "secret"}))).await;
     body_json(res).await["token"].as_str().unwrap().to_string()
 }
 
