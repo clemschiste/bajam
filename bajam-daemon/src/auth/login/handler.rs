@@ -1,3 +1,4 @@
+use crate::routes::paths;
 use askama::Template;
 use axum::http::StatusCode;
 use axum::response::{Html, Redirect};
@@ -42,14 +43,15 @@ pub fn session_redirect(jar: CookieJar, token: String) -> (CookieJar, Redirect) 
         .http_only(true)
         // .secure(true)
         .same_site(SameSite::Lax)
-        .path("/")
+        .path(paths::ROOT)
         .build();
 
-    (jar.add(cookie), Redirect::to("/dashboard"))
+    (jar.add(cookie), Redirect::to(paths::DASHBOARD))
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::routes::paths;
     use axum::http::StatusCode;
     use serde_json::json;
 
@@ -64,7 +66,7 @@ mod tests {
         let app = app().await;
         register_user(&app).await;
 
-        let res = send(&app, post_json("/api/login", creds("secret"))).await;
+        let res = send(&app, post_json(paths::API_LOGIN, creds("secret"))).await;
 
         assert_status(&res, StatusCode::OK);
     }
@@ -74,7 +76,7 @@ mod tests {
         let app = app().await;
         register_user(&app).await;
 
-        let res = send(&app, post_json("/api/login", creds("secret"))).await;
+        let res = send(&app, post_json(paths::API_LOGIN, creds("secret"))).await;
 
         assert_returns_token(res).await;
     }
@@ -84,7 +86,7 @@ mod tests {
         let app = app().await;
         register_user(&app).await;
 
-        let res = send(&app, post_json("/api/login", creds("wrong"))).await;
+        let res = send(&app, post_json(paths::API_LOGIN, creds("wrong"))).await;
 
         assert_status(&res, StatusCode::UNAUTHORIZED);
     }
@@ -93,7 +95,7 @@ mod tests {
     async fn login_api_empty_username_is_rejected_before_use_case() {
         let app = app().await;
 
-        let res = send(&app, post_json("/api/login", json!({"username": "", "password": "x"}))).await;
+        let res = send(&app, post_json(paths::API_LOGIN, json!({"username": "", "password": "x"}))).await;
 
         assert_status(&res, StatusCode::UNPROCESSABLE_ENTITY);
     }
@@ -103,9 +105,9 @@ mod tests {
         let app = app().await;
         register_user(&app).await;
 
-        let res = send(&app, post_form("/login", "username=user&password=secret")).await;
+        let res = send(&app, post_form(paths::LOGIN, "username=user&password=secret")).await;
 
-        assert_redirects_to(&res, "/dashboard");
+        assert_redirects_to(&res, paths::DASHBOARD);
     }
 
     #[tokio::test]
@@ -113,8 +115,17 @@ mod tests {
         let app = app().await;
         register_user(&app).await;
 
-        let res = send(&app, post_form("/login", "username=user&password=secret")).await;
+        let res = send(&app, post_form(paths::LOGIN, "username=user&password=secret")).await;
 
         assert_sets_session_cookie(&res);
+    }
+
+    #[tokio::test]
+    async fn login_page_form_posts_to_login_path() {
+        let app = app().await;
+
+        let res = send(&app, get(paths::LOGIN)).await;
+
+        assert_page_contains(res, &format!(r#"action="{}""#, paths::LOGIN)).await;
     }
 }

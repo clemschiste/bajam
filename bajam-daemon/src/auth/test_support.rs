@@ -65,6 +65,15 @@ pub fn post_cookie(uri: &str, token: &str) -> Request<Body> {
         .unwrap()
 }
 
+pub fn get(uri: &str) -> Request<Body> {
+    Request::get(uri).body(Body::empty()).unwrap()
+}
+
+pub async fn body_text(res: Response<Body>) -> String {
+    let bytes = axum::body::to_bytes(res.into_body(), usize::MAX).await.unwrap();
+    String::from_utf8(bytes.to_vec()).unwrap()
+}
+
 pub async fn body_json(res: Response<Body>) -> Value {
     let bytes = axum::body::to_bytes(res.into_body(), usize::MAX).await.unwrap();
     serde_json::from_slice(&bytes).unwrap()
@@ -103,4 +112,9 @@ pub async fn register_user(app: &Router) {
 pub async fn login_token(app: &Router) -> String {
     let res = send(app, post_json("/api/login", json!({"username": "user", "password": "secret"}))).await;
     body_json(res).await["token"].as_str().unwrap().to_string()
+}
+
+pub async fn assert_page_contains(res: Response<Body>, fragment: &str) {
+    let html = body_text(res).await;
+    assert!(html.contains(fragment), "page does not contain {fragment:?}");
 }

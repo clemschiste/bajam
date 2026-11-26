@@ -1,4 +1,5 @@
 use crate::auth;
+use crate::routes::paths;
 use crate::auth::middleware::*;
 use crate::middleware::logger::*;
 use crate::middleware::origin::middleware_origin;
@@ -36,8 +37,8 @@ pub fn create_router(state: AppState) -> Router {
         .route("/escapades", get(escapades_list)) // list all escapades of the user
         .route("/escapades/{escapade_id}/heartbeats", get(heartbeats_list)) // list all escapades of the user
         .route("/upload/{picture_id}", post(post_picture)) // Upload in conjuction with a hb
-        .route("/dashboard", get(dashboard_view)) // Display the dashboard.html template (last heartbeat loaded)
-        .route("/", get(|| async {})) // redirect either to dashboard or login (see auth middleware)
+        .route(paths::DASHBOARD, get(dashboard_view)) // Display the dashboard.html template (last heartbeat loaded)
+        .route(paths::ROOT, get(|| async {})) // redirect either to dashboard or login (see auth middleware)
         .merge(auth::protected_routes())
         .layer(from_fn_with_state(state.clone(), middleware_origin)) // origin middleware
         .layer(from_fn_with_state(state.clone(), middleware_auth)); // auth middleware

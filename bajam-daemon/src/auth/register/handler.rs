@@ -41,6 +41,7 @@ pub async fn register(
 
 #[cfg(test)]
 mod tests {
+    use crate::routes::paths;
     use axum::http::StatusCode;
     use serde_json::json;
 
@@ -50,7 +51,7 @@ mod tests {
     async fn register_api_returns_204() {
         let app = app().await;
 
-        let res = send(&app, post_json("/api/register", json!({"username": "user", "password": "secret"}))).await;
+        let res = send(&app, post_json(paths::API_REGISTER, json!({"username": "user", "password": "secret"}))).await;
 
         assert_status(&res, StatusCode::NO_CONTENT);
     }
@@ -60,7 +61,7 @@ mod tests {
         let app = app().await;
         register_user(&app).await;
 
-        let res = send(&app, post_json("/api/login", json!({"username": "user", "password": "secret"}))).await;
+        let res = send(&app, post_json(paths::API_LOGIN, json!({"username": "user", "password": "secret"}))).await;
 
         assert_status(&res, StatusCode::OK);
     }
@@ -69,7 +70,7 @@ mod tests {
     async fn register_api_empty_password_is_rejected_before_use_case() {
         let app = app().await;
 
-        let res = send(&app, post_json("/api/register", json!({"username": "user", "password": ""}))).await;
+        let res = send(&app, post_json(paths::API_REGISTER, json!({"username": "user", "password": ""}))).await;
 
         assert_status(&res, StatusCode::UNPROCESSABLE_ENTITY);
     }
@@ -78,16 +79,16 @@ mod tests {
     async fn register_web_redirects_to_dashboard() {
         let app = app().await;
 
-        let res = send(&app, post_form("/register", "username=user&password=secret")).await;
+        let res = send(&app, post_form(paths::REGISTER, "username=user&password=secret")).await;
 
-        assert_redirects_to(&res, "/dashboard");
+        assert_redirects_to(&res, paths::DASHBOARD);
     }
 
     #[tokio::test]
     async fn register_web_sets_session_cookie() {
         let app = app().await;
 
-        let res = send(&app, post_form("/register", "username=user&password=secret")).await;
+        let res = send(&app, post_form(paths::REGISTER, "username=user&password=secret")).await;
 
         assert_sets_session_cookie(&res);
     }

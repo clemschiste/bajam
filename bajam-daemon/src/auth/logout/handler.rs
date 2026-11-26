@@ -1,3 +1,4 @@
+use crate::routes::paths;
 use axum::response::Redirect;
 use axum::{Extension, extract::State, http::StatusCode};
 use axum_extra::extract::cookie::{Cookie, SameSite};
@@ -44,16 +45,17 @@ pub async fn session_logout_web(
     let cookie_remove = Cookie::build(("session_id", ""))
       .http_only(true)
       .same_site(SameSite::Lax)
-      .path("/")
+      .path(paths::ROOT)
       .build();
 
     let jar = jar.remove(cookie_remove);
     
-    Ok((jar, Redirect::to("/login")))  
+    Ok((jar, Redirect::to(paths::LOGIN)))  
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::routes::paths;
     use axum::http::StatusCode;
 
     use crate::auth::test_support::*;
@@ -64,7 +66,7 @@ mod tests {
         register_user(&app).await;
         let token = login_token(&app).await;
 
-        let res = send(&app, post_bearer("/api/logout", &token)).await;
+        let res = send(&app, post_bearer(paths::API_LOGOUT, &token)).await;
 
         assert_status(&res, StatusCode::NO_CONTENT);
     }
@@ -74,11 +76,11 @@ mod tests {
         let app = app().await;
         register_user(&app).await;
         let token = login_token(&app).await;
-        send(&app, post_bearer("/api/logout", &token)).await;
+        send(&app, post_bearer(paths::API_LOGOUT, &token)).await;
 
-        let res = send(&app, post_bearer("/api/logout", &token)).await;
+        let res = send(&app, post_bearer(paths::API_LOGOUT, &token)).await;
 
-        assert_redirects_to(&res, "/login");
+        assert_redirects_to(&res, paths::LOGIN);
     }
 
     #[tokio::test]
@@ -87,11 +89,11 @@ mod tests {
         register_user(&app).await;
         let t1 = login_token(&app).await;
         let t2 = login_token(&app).await;
-        send(&app, post_bearer("/api/logout/all", &t1)).await;
+        send(&app, post_bearer(paths::API_LOGOUT_ALL, &t1)).await;
 
-        let res = send(&app, post_bearer("/api/logout", &t2)).await;
+        let res = send(&app, post_bearer(paths::API_LOGOUT, &t2)).await;
 
-        assert_redirects_to(&res, "/login");
+        assert_redirects_to(&res, paths::LOGIN);
     }
 
     #[tokio::test]
@@ -100,9 +102,9 @@ mod tests {
         register_user(&app).await;
         let token = login_token(&app).await;
 
-        let res = send(&app, post_cookie("/logout", &token)).await;
+        let res = send(&app, post_cookie(paths::LOGOUT, &token)).await;
 
-        assert_redirects_to(&res, "/login");
+        assert_redirects_to(&res, paths::LOGIN);
     }
 
     #[tokio::test]
@@ -110,10 +112,10 @@ mod tests {
         let app = app().await;
         register_user(&app).await;
         let token = login_token(&app).await;
-        send(&app, post_cookie("/logout", &token)).await;
+        send(&app, post_cookie(paths::LOGOUT, &token)).await;
 
-        let res = send(&app, post_bearer("/api/logout", &token)).await;
+        let res = send(&app, post_bearer(paths::API_LOGOUT, &token)).await;
 
-        assert_redirects_to(&res, "/login");
+        assert_redirects_to(&res, paths::LOGIN);
     }
 }

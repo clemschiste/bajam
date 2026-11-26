@@ -1,3 +1,4 @@
+use crate::routes::paths;
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::{IntoResponse, Redirect};
 use axum::{middleware::Next, response::Response};
@@ -74,7 +75,7 @@ pub async fn middleware_auth(State(state): State<AppState>, mut req: Request, ne
     let path = req.uri().path().to_string();
     let credentials = match extract_credential(req.headers()) {
         Ok(credentials) => credentials,
-        Err(e) => {eprintln!("{:?}", e); return Ok(Redirect::to("/login").into_response())},
+        Err(e) => {eprintln!("{:?}", e); return Ok(Redirect::to(paths::LOGIN).into_response())},
     };
 
     let auth_method = match credentials {
@@ -88,7 +89,7 @@ pub async fn middleware_auth(State(state): State<AppState>, mut req: Request, ne
     };
     let session = match service::from_token(&state.db, &token).await.map_err(|_| AuthError::DatabaseError)? {
         Some(session) => session,
-        None => return Ok(Redirect::to("/login").into_response()),
+        None => return Ok(Redirect::to(paths::LOGIN).into_response()),
     };
 
     req.extensions_mut().insert(
@@ -99,8 +100,8 @@ pub async fn middleware_auth(State(state): State<AppState>, mut req: Request, ne
     });
 
     // Redirect to dashboard if the session is all valid
-    if path == "/" {
-        return Ok(Redirect::to("/dashboard").into_response());
+    if path == paths::ROOT {
+        return Ok(Redirect::to(paths::DASHBOARD).into_response());
     }
     Ok(next.run(req).await)
 }
