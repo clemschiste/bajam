@@ -8,7 +8,7 @@ use sqlx::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::db::escapade_queries::sql_list_escapades;
-use crate::middleware::auth::AuthContext;
+use crate::auth::middleware::AuthContext;
 use crate::state::AppState;
 
 // Maybe add description later ?

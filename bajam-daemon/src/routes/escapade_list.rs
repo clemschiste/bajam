@@ -1,6 +1,6 @@
 use axum::{Extension, extract::State, http::StatusCode};
 use bajam_common::models::escapade::Escapade;
-use crate::middleware::auth::AuthContext;
+use crate::auth::middleware::AuthContext;
 use crate::state::AppState;
 use crate::db::escapade_queries::sql_list_escapades;
 use axum::Json;

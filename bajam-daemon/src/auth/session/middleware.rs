@@ -1,12 +1,11 @@
+use crate::routes::paths;
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::{IntoResponse, Redirect};
 use axum::{middleware::Next, response::Response};
 use axum::extract::{State, Request};
 use axum_extra::extract::CookieJar;
-use sha2::{Sha256, Digest};
-use bajam_common::models::session::Session;
+use super::service;
 use crate::state::AppState;
-use crate::db::session_queries::sql_delete_user_session;
 
 #[derive(Debug, Clone)]
 pub struct AuthContext {
@@ -76,7 +75,7 @@ pub async fn middleware_auth(State(state): State<AppState>, mut req: Request, ne
     let path = req.uri().path().to_string();
     let credentials = match extract_credential(req.headers()) {
         Ok(credentials) => credentials,
-        Err(e) => {eprintln!("{:?}", e); return Ok(Redirect::to("/login").into_response())},
+        Err(e) => {eprintln!("{:?}", e); return Ok(Redirect::to(paths::LOGIN).into_response())},
     };
 
     let auth_method = match credentials {
@@ -84,22 +83,14 @@ pub async fn middleware_auth(State(state): State<AppState>, mut req: Request, ne
         AuthCredentials::SessionCookie(_) => AuthMethod::Cookie,
     };
 
-    // Check that the session exists in db. On none variant redirect to /login
-    let opt_session = match credentials {
-        AuthCredentials::Bearer(token) => {fetch_opt_session(&state, sha256_hash(token)).await?},
-        AuthCredentials::SessionCookie(cookie) => {fetch_opt_session(&state, sha256_hash(cookie)).await?},
+    // Session must exist and be unexpired. Otherwise redirect to /login
+    let token = match credentials {
+        AuthCredentials::Bearer(t) | AuthCredentials::SessionCookie(t) => t,
     };
-
-    let session = match opt_session {
+    let session = match service::from_token(&state.db, &token).await.map_err(|_| AuthError::DatabaseError)? {
         Some(session) => session,
-        None => return Ok(Redirect::to("/login").into_response()), 
+        None => return Ok(Redirect::to(paths::LOGIN).into_response()),
     };
-
-    // Check that the session is valid timewise or delete it
-    if session.expires_at < chrono::Utc::now().naive_utc() {
-        sql_delete_user_session(&state, &session.user_id, &session.id).await.map_err(|_| AuthError::DatabaseError)?;
-        return Ok(Redirect::to("/login").into_response())
-    }
 
     req.extensions_mut().insert(
         AuthContext {
@@ -109,8 +100,8 @@ pub async fn middleware_auth(State(state): State<AppState>, mut req: Request, ne
     });
 
     // Redirect to dashboard if the session is all valid
-    if path == "/" {
-        return Ok(Redirect::to("/dashboard").into_response());
+    if path == paths::ROOT {
+        return Ok(Redirect::to(paths::DASHBOARD).into_response());
     }
     Ok(next.run(req).await)
 }
@@ -149,25 +140,4 @@ fn extract_credential(headers: &HeaderMap) -> Result<AuthCredentials, AuthError>
 
     Err(AuthError::MissingCredentials)
     
-}
- 
-pub fn sha256_hash(value: String) -> String {
-    let hashed_value = Sha256::digest(value.as_bytes());
-    hex::encode(hashed_value)
-}
-
-pub async fn fetch_opt_session(state: &AppState, hash: String) -> Result<Option<Session>, AuthError> {
-    let session_opt = sqlx::query_as!(
-        Session,
-        r#"
-          SELECT id, user_id, token_hash, expires_at
-          FROM sessions
-          WHERE token_hash = $1
-        "#, hash
-    )
-    .fetch_optional(&state.db)
-    .await
-    .map_err(|_| AuthError::DatabaseError)?;
-
-    Ok(session_opt)
 }

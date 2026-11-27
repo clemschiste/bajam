@@ -1,4 +1,6 @@
-use crate::middleware::auth::*;
+use crate::auth;
+use crate::routes::paths;
+use crate::auth::middleware::*;
 use crate::middleware::logger::*;
 use crate::middleware::origin::middleware_origin;
 use crate::routes::escapade_delete::*;
@@ -8,13 +10,8 @@ use crate::routes::heartbeat_delete::*;
 use crate::routes::heartbeat_list::*;
 use crate::routes::heartbeat_post::*;
 use crate::routes::upload::*;
-use crate::routes::user_login::*;
-use crate::routes::user_logout::*;
-use crate::routes::user_register::*;
 use crate::state::AppState;
 use crate::views::dashboard::*;
-use crate::views::login::*;
-use crate::views::register::*;
 use axum::extract::DefaultBodyLimit;
 use axum::middleware::{from_fn, from_fn_with_state};
 use axum::routing::delete;
@@ -28,38 +25,30 @@ pub fn create_router(state: AppState) -> Router {
     // Protected routes (requires valide Authorization header)
     let protected_routes = Router::new()
         .route(
-            "/api/escapades/{escapade_id}/heartbeat",
+            paths::API_ESCAPADE_HEARTBEAT,
             post(heartbeat_post),
         ) // Create a new heartbeat
-        .route("/api/escapades", post(escapade_post_api)) // Create (and join) a new escapade
-        .route("/api/escapades/{escapade_id}", delete(escapade_delete)) // Delete an escapade (with cascade)
-        .route("/api/logout", post(session_logout))
-        .route("/api/logout/all", post(session_logout_all_user_sessions))
-        .route("/escapades/{escapade_id}/heartbeat", post(heartbeat_post)) // Create a new heartbeat
-        .route("/escapades/{escapade_id}", delete(escapade_delete)) // Delete an escapade (with cascade)
-        .route("/heartbeats/{heartbeat_id}", delete(heartbeat_delete)) // Delete a heartbeat
-        .route("/escapades", post(escapade_post_web)) // Create (and join) a new escapade
-        .route("/escapades", get(escapades_list)) // list all escapades of the user
-        .route("/escapades/{escapade_id}/heartbeats", get(heartbeats_list)) // list all escapades of the user
-        .route("/upload/{picture_id}", post(post_picture)) // Upload in conjuction with a hb
-        .route("/logout", post(session_logout_web))
-        .route("/logout/all", post(session_logout_all_user_sessions))
-        .route("/dashboard", get(dashboard_view)) // Display the dashboard.html template (last heartbeat loaded)
-        .route("/", get(|| async {})) // redirect either to dashboard or login (see auth middleware)
+        .route(paths::API_ESCAPADES, post(escapade_post_api)) // Create (and join) a new escapade
+        .route(paths::API_ESCAPADE, delete(escapade_delete)) // Delete an escapade (with cascade)
+        .route(paths::ESCAPADE_HEARTBEAT, post(heartbeat_post)) // Create a new heartbeat
+        .route(paths::ESCAPADE, delete(escapade_delete)) // Delete an escapade (with cascade)
+        .route(paths::HEARTBEAT, delete(heartbeat_delete)) // Delete a heartbeat
+        .route(paths::ESCAPADES, post(escapade_post_web)) // Create (and join) a new escapade
+        .route(paths::ESCAPADES, get(escapades_list)) // list all escapades of the user
+        .route(paths::ESCAPADE_HEARTBEATS, get(heartbeats_list)) // list all escapades of the user
+        .route(paths::UPLOAD, post(post_picture)) // Upload in conjuction with a hb
+        .route(paths::DASHBOARD, get(dashboard_view)) // Display the dashboard.html template (last heartbeat loaded)
+        .route(paths::ROOT, get(|| async {})) // redirect either to dashboard or login (see auth middleware)
+        .merge(auth::protected_routes())
         .layer(from_fn_with_state(state.clone(), middleware_origin)) // origin middleware
         .layer(from_fn_with_state(state.clone(), middleware_auth)); // auth middleware
 
     // Full router
     Router::new()
-        .route("/api/register", post(register)) // Create a new user
-        .route("/api/login", post(login_api)) // login via json
-        .route("/register", post(register_web)) // register via form view html
-        .route("/register", get(register_view)) // register via form view html
-        .route("/login", post(login_web)) // login via form view
-        .route("/login", get(login_view)) // Verif + token to user
-        .route("/image/{picture_id}", get(get_picture))
+        .merge(auth::public_routes())
+        .route(paths::IMAGE, get(get_picture))
         .merge(protected_routes)
-        .nest_service("/static", ServeDir::new("static"))
+        .nest_service(paths::STATIC, ServeDir::new("static"))
         .layer(DefaultBodyLimit::max(20 * 1024 * 1024))
         .layer(from_fn(middleware_logger))
         .with_state(state)

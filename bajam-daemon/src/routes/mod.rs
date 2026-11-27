@@ -1,3 +1,4 @@
+pub mod paths;
 pub mod escapade_delete;
 pub mod escapade_list;
 pub mod escapade_post;
@@ -6,6 +7,3 @@ pub mod heartbeat_list;
 pub mod heartbeat_post;
 pub mod router;
 pub mod upload;
-pub mod user_login;
-pub mod user_logout;
-pub mod user_register;

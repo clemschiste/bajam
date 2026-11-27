@@ -2,7 +2,7 @@ use axum::extract::Path;
 use axum::{Extension, extract::State, http::StatusCode};
 use bajam_common::models::heartbeat::Heartbeat;
 use crate::db::heartbeat_queries::sql_list_heartbeats;
-use crate::middleware::auth::AuthContext;
+use crate::auth::middleware::AuthContext;
 use crate::state::AppState;
 use axum::Json;
 

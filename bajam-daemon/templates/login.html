@@ -2,11 +2,11 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="static/style.css"/>
+    <link rel="stylesheet" href="{{ crate::routes::paths::STATIC }}/style.css"/>
     <title>Bajam - Login</title>
 </head>
 <body>
-    <form action="/login" method="POST">
+    <form action="{{ crate::routes::paths::LOGIN }}" method="POST">
 
         <label for="username">Username</label>
         <input
@@ -28,6 +28,6 @@
 
     </form>
 
-    No account ? <a href="/register" style="text-decoration:underline;">Register</a>
+    No account ? <a href="{{ crate::routes::paths::REGISTER }}" style="text-decoration:underline;">Register</a>
 </body>
 </html>
