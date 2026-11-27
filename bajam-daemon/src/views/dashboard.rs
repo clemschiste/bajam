@@ -5,8 +5,9 @@ use axum::http::StatusCode;
 use bajam_common::models::escapade::Escapade;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use crate::db::escapade_queries::sql_list_escapades;
 use crate::auth::middleware::AuthContext;
+use crate::escapades::error::to_http;
+use crate::escapades::list::service::list_escapades;
 use crate::state::AppState;
 
 use bajam_common::models::heartbeat::Heartbeat;
@@ -42,7 +43,7 @@ pub async fn dashboard_view(
         )
     })?;
 
-    let escapades = sql_list_escapades(&state, &auth_context.user_id).await?;
+    let escapades = list_escapades(&state.db, auth_context.user_id).await.map_err(to_http)?;
 
     // Tous les heartbeats de l'utilisateur, pour le survol carte par escapade
     let user_heartbeats = sqlx::query_as!(

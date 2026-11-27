@@ -3,8 +3,8 @@ use tower::ServiceExt;
 use uuid::Uuid;
 mod common;
 use common::*;
-use bajam_daemon::routes::{escapade_post::EscapadeResponse, paths};
-use bajam_common::models::heartbeat::ImageHandle;
+use bajam_daemon::routes::paths;
+use bajam_common::models::{escapade::EscapadeResponse, heartbeat::ImageHandle};
 
 #[tokio::test]
 // Scenario post an heartbeat
