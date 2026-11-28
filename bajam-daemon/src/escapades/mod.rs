@@ -1,7 +1,6 @@
 pub mod create;
 pub mod delete;
 pub mod error;
-pub mod escapade;
 pub mod list;
 
 use axum::Router;

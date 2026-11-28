@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        SELECT *\n        FROM heartbeats\n        WHERE\n          escapade_id = ?\n          AND user_id = ?\n        LIMIT 500\n    ",
+  "query": "\n          SELECT *\n          FROM heartbeats\n          WHERE\n            escapade_id = ?\n            AND user_id = ?\n          LIMIT 500\n      ",
   "describe": {
     "columns": [
       {
@@ -106,5 +106,5 @@
       false
     ]
   },
-  "hash": "b8ea144ce7ab8569f877f6460fe4911410c8b395f2a51efdc982e383cf2f9bb0"
+  "hash": "28d09cf666d2121522b1ba1083273958c61297a3721084230e601743365926f8"
 }

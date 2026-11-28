@@ -3,12 +3,11 @@ use axum::Form;
 use axum::response::Html;
 use axum::{http::StatusCode};
 use axum::{Extension, Json, extract::State};
-use bajam_common::models::escapade::Escapade;
+use bajam_common::models::escapade::{Escapade, EscapadePost};
 use sqlx::Result;
 
 use crate::escapades::error::to_http;
 use crate::escapades::create::service::create_escapade;
-use crate::escapades::escapade::EscapadePost;
 use crate::escapades::list::service::list_escapades;
 
 use crate::auth::middleware::AuthContext;

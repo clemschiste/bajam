@@ -40,7 +40,10 @@ impl Credentials {
         if password.is_empty() {
             return Err(CredentialsError::EmptyPassword);
         }
-        Ok(Self { username: username.into(), password: password.into() })
+        Ok(Self {
+            username: username.into(),
+            password: password.into(),
+        })
     }
 
     pub fn username(&self) -> &str {

@@ -46,14 +46,10 @@ pub async fn create_heartbeat(escinput: EscInput, latitude: f64, longitude: f64,
               CliError::HttpError(response.status(), "Error in fetching escapade list.".to_string())),
           }
         },
-    };
-
-
-      let heartbeat = HeartbeatPost {
-        latitude,
-        longitude,
-        description, 
       };
+
+
+      let heartbeat = HeartbeatPost::new(latitude, longitude, description).map_err(|e| CliError::InvalidInput(e.to_string()))?;
 
       // To value to match HeartbeatPost struct !
       let heartbeat_json = serde_json::to_value(&heartbeat)?;
